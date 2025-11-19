@@ -45,10 +45,6 @@ function Register() {
                 <ErrorMessage name="lastName" component="span" className='error' />
                 <Field id="register" name="lastName" />
 
-                <label>Date of Birth</label>
-                <ErrorMessage name="DoB" component="span" className='error' />
-                <Field type="date" id="register" name="DoB" />
-
                 <label>Email</label>
                 <ErrorMessage name="email" component="span" className='error' />
                 <Field type="email" id="register" name="email" placeholder="you@email.com" />
