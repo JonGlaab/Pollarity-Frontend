@@ -178,36 +178,42 @@ export const CreateSurvey = () => {
             <p className="text-gray-600 mb-6">Create or edit your survey. Add questions, choose types, set required fields, and manage options.</p>
 
             {/* Action Buttons */}
-            <div className="flex space-x-4 mb-8">
-                <button onClick={() => setIsPreviewMode(true)} className="bg-blue-500 text-white p-2 rounded">
+            <div className="flex space-x-3 mb-4">
+                <button onClick={() => setIsPreviewMode(true)} className="bg-[#415a77] text-white py-2 px-4 rounded-lg shadow-md hover:bg-[#1b263b]">
                     Preview Survey
                 </button>
-                <button onClick={() => handleSave('draft')} disabled={isSaving} className="bg-green-500 text-white p-2 rounded">
+                <button onClick={() => handleSave('draft')} disabled={isSaving} className="bg-gray-400 text-white py-2 px-4 rounded-lg shadow-md">
                     {isSaving ? 'Saving Draft...' : 'Save Draft'}
                 </button>
-                <button onClick={() => handleSave('published')} disabled={isSaving || !survey.title || survey.questions.length === 0} className="bg-purple-500 text-white p-2 rounded">
+                <button onClick={() => handleSave('published')} disabled={isSaving || !survey.title || survey.questions.length === 0} className="bg-[#0d1b2a] text-white py-2 px-4 rounded-lg shadow-md hover:bg-[#1b263b]">
                     Publish Survey
                 </button>
             </div>
 
             <div className="survey-details mb-8 border p-6 rounded shadow">
                 <h2 className="text-2xl mb-4">Survey Details</h2>
-                <input
+                <div>
+                    <label>Survey Title</label>
+                    <input
                     type="text"
                     name="title"
-                    placeholder="Survey Title"
+                    placeholder="Add your title here"
                     value={survey.title}
                     onChange={handleSurveyDetailChange}
                     className="w-full p-2 border rounded mb-3"
                 />
+                </div>
+                <div>
+                    <label>Survey Description</label>
                 <textarea
                     name="description"
-                    placeholder="Describe the purpose of this survey"
+                    placeholder="What is the purpose of this survey"
                     value={survey.description}
                     onChange={handleSurveyDetailChange}
                     rows="4"
                     className="w-full p-2 border rounded"
                 />
+                </div>
             </div>
 
             <div className="questions-section">
