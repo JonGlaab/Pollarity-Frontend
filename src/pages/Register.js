@@ -9,7 +9,6 @@ function Register() {
     const initialValues = {
         firstName: "",
         lastName: "",
-        DoB: "",
         email: "",  
         password: ""
     };
@@ -53,7 +52,7 @@ function Register() {
                 <ErrorMessage name="password" component="span" className='error' />
                 <Field type="password" id="register" name="password" placeholder="not 'password'" />
 
-                <button type="submit">sign me up!</button>
+                <button type="submit">Sign me up!</button>
             </Form>
             </Formik>     
         </div>
