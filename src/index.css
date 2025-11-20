@@ -5,9 +5,66 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+    color: #0d1b2a;
+
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+a {
+    color: inherit;
+}
+
+.mainNav{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 30px;
+    background-color: #E0E1DD;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: #0d1b2a;
+}
+
+p {
+    color: #1B263B
+}
+
+/* index.css or your combined CSS file */
+
+.App {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.container {
+    max-width: 100%;
+    text-align: center;
+}
+
+.formContainer {
+    width: 100%;
+    max-width: 450px;
+    margin: 40px auto;
+    padding: 25px;
+    border-radius: 12px;
+    background: #e0e1dd;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.surveyContainer {
+}
+
+.surveyTable {
+
 }

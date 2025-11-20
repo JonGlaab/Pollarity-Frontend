@@ -173,8 +173,8 @@ export const CreateSurvey = () => {
 
     // Survey Builder Mode (The main view)
     return (
-        <div className="survey-builder-page p-8">
-            <h1 className="text-4xl font-bold">Survey Builder</h1>
+        <div className="container">
+            <h1 className="text-4xl font-bold">Build Your Survey</h1>
             <p className="text-gray-600 mb-6">Create or edit your survey. Add questions, choose types, set required fields, and manage options.</p>
 
             {/* Action Buttons */}

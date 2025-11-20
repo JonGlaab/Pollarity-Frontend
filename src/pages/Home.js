@@ -1,11 +1,11 @@
 import axios from 'axios';
 import { useEffect, useState } from 'react';
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 
 export const Home = (props) => {
     const [listOfSurveys, setListOfSurveys] = useState([]);
 
-    let navigate = useNavigate();
+    // let navigate = useNavigate();
 
     useEffect(() => {
     const fetchSurveys = async () => {
@@ -23,11 +23,11 @@ export const Home = (props) => {
     }, []);
 
     return (
-        <div>
+        <div className="container">
             <h1>Welcome to Pollarity</h1>
             <p>The place to have all YOUR questions answered</p>
-            <div className="todo-table-container">
-                <table className="todo-table">
+            <div className="surveyContainer">
+                <table className="SurveyTable">
                 <thead>
                     <tr>
                     <th>Survey</th>
