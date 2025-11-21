@@ -2,22 +2,55 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 🎨 THEME DEFINITIONS */
+:root {
+    /* 1. Backgrounds */
+    --color-background: #e0e1dd;
+    --color-surface: #ffffff;
+
+    /* 2. Primary Brand Colors */
+    --color-primary: #1b263b;
+    --color-primary-hover: #0d1b2a;
+    --color-primary-content: #ffffff;
+
+    /* 3. Secondary / Accents */
+    --color-secondary: #415A77;
+    --color-secondary-hover: #1b263b;
+
+    /* 4. Text Colors */
+    --color-text-main: #0d1b2a;
+    --color-text-muted: #4b5563;
+
+    /* 5. Status Colors */
+    --color-error: #ef4444;
+}
+
+/* 🌑 DARK THEME  */
+[data-theme="dark"] {
+    --color-background: #0f172a;
+    --color-surface: #1e293b;
+    --color-primary: #3b82f6;
+    --color-primary-hover: #2563eb;
+    --color-secondary: #64748b;
+    --color-text-main: #f8fafc;
+    --color-text-muted: #94a3b8;
+}
+
+/* GLOBAL STYLES */
 body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 
-    background-color: #e0e1dd;
-    color: #0d1b2a;
-    margin: 0;
-
+    background-color: var(--color-background);
+    color: var(--color-text-main);
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
 
@@ -25,31 +58,35 @@ a {
     color: inherit;
 }
 
-.mainNav{
+/* COMPONENT STYLES */
+
+.mainNav {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 10px 30px;
-    background-color: #415A77;
+    background-color: var(--color-secondary);
     width: 100%;
     box-sizing: border-box;
-    }
-.mainNav a{
-    color:  #e0e1dd;
+}
+
+.mainNav a {
+
+    color: var(--color-background);
 }
 
 h1, h2, h3, h4, h5, h6 {
-    color: #0d1b2a;
+    color: var(--color-text-main);
 }
 
 p {
-    color: #1B263B
+
+    color: var(--color-primary);
 }
 
-/* index.css or your combined CSS file */
-
 .App {
-    background-color: #ffffff;
+
+    background-color: var(--color-surface);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     padding: 20px;
     max-width: 1200px;
@@ -69,15 +106,15 @@ p {
     margin: 40px auto;
     padding: 25px;
     border-radius: 12px;
-    background: #e0e1dd;
+    background: var(--color-background);
     display: flex;
     flex-direction: column;
     gap: 15px;
 }
 
+/* Placeholders */
 .surveyContainer {
 }
 
 .surveyTable {
-
 }

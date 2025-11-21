@@ -8,11 +8,26 @@ module.exports = {
         extend: {
 
             colors: {
-                'brand-darkest': '#0d1b2a',
-                'brand-dark': '#1b263b',
-                'brand-mid': '#415a77',
-                'brand-light': '#778da9',
-                'brand-bg': '#e0e1dd',
+                primary: {
+                    DEFAULT: 'var(--color-primary)',
+                    hover: 'var(--color-primary-hover)',
+                    content: 'var(--color-primary-content)',
+                },
+                secondary: {
+                    DEFAULT: 'var(--color-secondary)',
+                    hover: 'var(--color-secondary-hover)',
+                },
+                background: {
+                    DEFAULT: 'var(--color-background)',
+                    paper: 'var(--color-surface)',
+                },
+                text: {
+                    main: 'var(--color-text-main)',
+                    muted: 'var(--color-text-muted)',
+                },
+                status: {
+                    error: 'var(--color-error)',
+                }
             },
         },
     },
