@@ -7,6 +7,11 @@ import Logout from './pages/Logout';
 import Home from './pages/Home';
 import { CreateSurvey } from './pages/CreateSurvey';
 
+import { UISurveyCreate } from './pages/UISurveyCreate';
+//import { BrowseSurvey } from "./pages/BrowseSurvey";
+//import { TakeSurvey } from "./pages/TakeSurvey";
+//import { SurveyResultsPage } from "./pages/SurveyResultsPage";
+
 axios.defaults.baseURL = process.env.REACT_APP_API_URL;
 
 if (typeof window !== 'undefined') {
@@ -43,6 +48,8 @@ function Navbar() {
               <>
                   {" | "}
                   <Link to="/survey/create">Create Survey</Link>
+                   {" | "}
+                  <Link to="/survey/othercreate">Create Survey</Link>
               </>
           )}
         </div>
@@ -62,6 +69,7 @@ function Navbar() {
 }
 
 function App() {
+
   return (
     <Router>
         <Navbar />
@@ -72,6 +80,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/logout" element={<Logout />} />
             <Route path="/survey/create" element={<CreateSurvey />} />
+            <Route path="/survey/othercreate" element={<UISurveyCreate />} />
         </Routes>
       </div>
     </Router>
