@@ -4,8 +4,11 @@ import React from 'react';
 const QuestionEditor = ({
                             question,
                             index,
+                            totalQuestions,
                             handleQuestionChange,
                             handleRemoveQuestion,
+                            handleMoveQuestionUp,
+                            handleMoveQuestionDown,
                             handleAddOption,
                             handleOptionChange,
                             handleRemoveOption }) => {
@@ -17,10 +20,31 @@ const QuestionEditor = ({
     return (
         <div className="question-editor mb-6 p-4 border-2 rounded-lg shadow-md">
             <div className="flex justify-between items-center mb-3">
-                <h3 className="text-lg font-semibold">Question {index + 1}</h3>
+                <div className="flex items-center space-x-2">
+                    <h3 className="text-lg font-semibold">Question {index + 1}</h3>
+                    {/* Reorder Buttons */}
+                    <div className="flex flex-col space-y-1 ml-2">
+                        <button
+                            onClick={() => handleMoveQuestionUp(index)}
+                            disabled={index === 0}
+                            className="text-gray-600 hover:text-gray-800 disabled:text-gray-300 disabled:cursor-not-allowed"
+                            title="Move up"
+                        >
+                            ↑
+                        </button>
+                        <button
+                            onClick={() => handleMoveQuestionDown(index)}
+                            disabled={index === totalQuestions - 1}
+                            className="text-gray-600 hover:text-gray-800 disabled:text-gray-300 disabled:cursor-not-allowed"
+                            title="Move down"
+                        >
+                            ↓
+                        </button>
+                    </div>
+                </div>
                 <button
                     onClick={() => handleRemoveQuestion(index)}
-                    className="text-red-500 hover:text-red-700"
+                    className="text-red-500 hover:text-red-700 px-2 py-1 rounded hover:bg-red-50"
                 >
                     Remove
                 </button>
@@ -62,51 +86,44 @@ const QuestionEditor = ({
                 <div className="options-section mt-4 p-3 bg-gray-50 border rounded">
                     <h4 className="font-medium mb-2">Options:</h4>
 
-                    {question.options.map((opt, optIndex) => (
-                        <div key={optIndex} className="flex items-center space-x-2 mb-2">
-                            {/* Radio/Checkbox icon placeholder */}
-                            <input
-                                type={question.question_type === 'multiple_choice' ? 'radio' : 'checkbox'}
-                                disabled
-                                className="mr-2"
-                            />
+                    {(!question.options || question.options.length === 0) ? (
+                        <p className="text-sm italic text-gray-500 mb-2">No options yet. Add an option below.</p>
+                    ) : (
+                        question.options.map((opt, optIndex) => (
+                            <div key={optIndex} className="flex items-center space-x-2 mb-2">
+                                {/* Radio/Checkbox icon placeholder */}
+                                <input
+                                    type={question.question_type === 'multiple_choice' ? 'radio' : 'checkbox'}
+                                    disabled
+                                    className="mr-2"
+                                />
 
-                            {/* Option Text Input */}
-                            <input
-                                type="text"
-                                value={opt.option_text}
-                                placeholder={`Option ${optIndex + 1}`}
-                                onChange={(e) => handleOptionChange(index, optIndex, e.target.value)}
-                                className="flex-grow p-1 border rounded"
-                            />
+                                {/* Option Text Input */}
+                                <input
+                                    type="text"
+                                    value={opt.option_text || ''}
+                                    placeholder={`Option ${optIndex + 1}`}
+                                    onChange={(e) => handleOptionChange(index, optIndex, e.target.value)}
+                                    className="flex-grow p-1 border rounded"
+                                />
 
-                            {/* Remove Option Button */}
-                            <button
-                                onClick={() => handleRemoveOption(index, optIndex)}
-                                className="text-red-400 hover:text-red-600 text-lg"
-                            >
-                                &times;
-                            </button>
-                        </div>
-                    ))}
+                                {/* Remove Option Button */}
+                                <button
+                                    onClick={() => handleRemoveOption(index, optIndex)}
+                                    className="text-red-400 hover:text-red-600 text-lg px-2"
+                                    title="Remove option"
+                                >
+                                    &times;
+                                </button>
+                            </div>
+                        ))
+                    )}
 
                     {/* Add Option button */}
                     <button
                         onClick={() => handleAddOption(index)}
-                        className="text-sm text-blue-500 hover:underline mt-2"
+                        className="text-sm text-blue-500 hover:text-blue-700 hover:underline mt-2 px-2 py-1 rounded hover:bg-blue-50"
                     >
-                        + Add Option
-                    </button>
-                </div>
-            )}
-
-            {isOptionQuestion && (
-                <div className="options-section mt-4 p-3 bg-gray-50 border rounded">
-                    <h4 className="font-medium mb-2">Options:</h4>
-
-                    {question.options.length === 0 && <p className="text-sm italic text-gray-500">Add an option below.</p>}
-
-                    <button className="text-sm text-blue-500 hover:underline mt-2">
                         + Add Option
                     </button>
                 </div>

@@ -75,10 +75,67 @@ export const CreateSurvey = () => {
         setSurvey(prev => ({ ...prev, questions: updatedQuestions }));
     };
 
+    // Handler to move a question up (decrease order)
+    const handleMoveQuestionUp = (questionIndex) => {
+        if (questionIndex === 0) return; // Can't move first question up
+
+        const updatedQuestions = [...survey.questions];
+        [updatedQuestions[questionIndex - 1], updatedQuestions[questionIndex]] = 
+        [updatedQuestions[questionIndex], updatedQuestions[questionIndex - 1]];
+
+        // Update question_order for all questions
+        const reorderedQuestions = updatedQuestions.map((q, index) => ({
+            ...q,
+            question_order: index + 1
+        }));
+
+        setSurvey(prev => ({ ...prev, questions: reorderedQuestions }));
+    };
+
+    // Handler to move a question down (increase order)
+    const handleMoveQuestionDown = (questionIndex) => {
+        if (questionIndex === survey.questions.length - 1) return; // Can't move last question down
+
+        const updatedQuestions = [...survey.questions];
+        [updatedQuestions[questionIndex], updatedQuestions[questionIndex + 1]] = 
+        [updatedQuestions[questionIndex + 1], updatedQuestions[questionIndex]];
+
+        // Update question_order for all questions
+        const reorderedQuestions = updatedQuestions.map((q, index) => ({
+            ...q,
+            question_order: index + 1
+        }));
+
+        setSurvey(prev => ({ ...prev, questions: reorderedQuestions }));
+    };
+
     // Handler to save the survey (POST request)
     const handleSave = async (status) => {
         setIsSaving(true);
-        const dataToSend = { ...survey, status };
+        
+        // Ensure all questions have correct question_order and options have correct option_order
+        const questionsToSave = survey.questions.map((q, index) => {
+            const questionData = {
+                ...q,
+                question_order: index + 1, // Ensure order is sequential starting from 1
+            };
+
+            // Ensure options have correct option_order if they exist
+            if (questionData.options && questionData.options.length > 0) {
+                questionData.options = questionData.options.map((opt, optIndex) => ({
+                    ...opt,
+                    option_order: optIndex + 1
+                }));
+            }
+
+            return questionData;
+        });
+
+        const dataToSend = {
+            ...survey,
+            status,
+            questions: questionsToSave
+        };
 
         try {
             const response = await axios.post("/api/surveys", dataToSend, {
@@ -90,7 +147,8 @@ export const CreateSurvey = () => {
 
         } catch (error) {
             console.error("Survey creation failed:", error.response?.data || error);
-            alert("Failed to save survey. Check the console for details.");
+            const errorMessage = error.response?.data?.error || error.response?.data?.details || "Failed to save survey. Check the console for details.";
+            alert(errorMessage);
         } finally {
             setIsSaving(false);
         }
@@ -229,8 +287,11 @@ export const CreateSurvey = () => {
                         key={index}
                         question={q}
                         index={index}
+                        totalQuestions={survey.questions.length}
                         handleQuestionChange={handleQuestionChange}
                         handleRemoveQuestion={handleRemoveQuestion}
+                        handleMoveQuestionUp={handleMoveQuestionUp}
+                        handleMoveQuestionDown={handleMoveQuestionDown}
                         handleAddOption={handleAddOption}
                         handleOptionChange={handleOptionChange}
                         handleRemoveOption={handleRemoveOption}
