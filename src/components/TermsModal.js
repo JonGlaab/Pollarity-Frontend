@@ -1,5 +1,5 @@
 import React from 'react';
-import { termsOfService } from '../data/terms';
+import { termsOfService } from '../data/Terms';
 
 const TermsModal = ({ isOpen, onClose, onAgree }) => {
     if (!isOpen) return null;

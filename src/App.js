@@ -41,4 +41,6 @@ function App() {
   );
 }
 
+console.log('API base:', process.env.REACT_APP_API_URL)
+
 export default App;
