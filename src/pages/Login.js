@@ -27,15 +27,41 @@ function Login() {
         password: Yup.string().required("Password is required")
     });
 
+    // const onSubmit = async (data, { setSubmitting }) => {
+    //     try {
+    //         const response = await axios.post("/api/auth/login", data);
+    //
+    //         if (response.data.token) {
+    //             localStorage.setItem("token", response.data.token);
+    //             axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
+    //             window.dispatchEvent(new Event('authChange'));
+    //             navigate("/");
+    //         }
+    //     } catch (error) {
+    //         console.error("Login error:", error);
+    //         const message = error.response?.data?.message || "Login failed. Please check your credentials.";
+    //         alert(message);
+    //     } finally {
+    //         setSubmitting(false);
+    //     }
+    // };
+
     const onSubmit = async (data, { setSubmitting }) => {
         try {
             const response = await axios.post("/api/auth/login", data);
 
-            if (response.data.token) {
-                localStorage.setItem("token", response.data.token);
-                axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
+            // FIX: Check if response.data exists AND contains the token
+            const token = response.data?.token;
+
+            if (token) {
+                localStorage.setItem("token", token);
+                axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
                 window.dispatchEvent(new Event('authChange'));
                 navigate("/");
+            } else {
+                // New: Handle case where 200 OK is received but no token is in the body
+                console.error("Login failed: Server returned 200 OK but no token.");
+                alert("Login failed due to unexpected server response.");
             }
         } catch (error) {
             console.error("Login error:", error);
