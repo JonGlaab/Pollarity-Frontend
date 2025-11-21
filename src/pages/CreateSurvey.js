@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import QuestionEditor from '../components/QuestionEditor';
@@ -24,6 +24,13 @@ export const CreateSurvey = () => {
     const [survey, setSurvey] = useState(initialSurveyState);
     const [isPreviewMode, setIsPreviewMode] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            navigate('/login');
+        }
+    }, [navigate]);
 
     // Handler for Survey Title and Description
     const handleSurveyDetailChange = (e) => {

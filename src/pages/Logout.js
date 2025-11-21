@@ -3,22 +3,22 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 function Logout() {
-
     const navigate = useNavigate();
 
     useEffect(() => {
         const logoutUser = async () => {
-        try {
-            await axios.post("http://Pollarity/logout", {}, {
-            withCredentials: true
-            });
+            try {
+                // If you add a logout endpoint later, call it here.
+            } catch (err) {
+                console.error("Logout error:", err);
+            } finally {
+                localStorage.removeItem("token");
+                delete axios.defaults.headers.common['Authorization'];
+                window.dispatchEvent(new Event('authChange'));
+                navigate("/login");
+            }
+        };
 
-            navigate("/login");
-        } catch (err) {
-            console.error("Logout error:", err);
-            navigate("/login");
-        }};
-    
         logoutUser();
     }, [navigate]);
 
