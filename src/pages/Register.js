@@ -158,7 +158,7 @@ function Register() {
 
                         <TermsModal
                             isOpen={isModalOpen}
-                            onClose={() => setModalOpen(false)}
+                            onClose={() => {setModalOpen(false); setFieldValue('agreedToTerms', false)}}
                             onAgree={() => {
                                 setFieldValue('agreedToTerms', true);
                                 setModalOpen(false);
