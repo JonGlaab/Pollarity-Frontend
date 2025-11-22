@@ -2,7 +2,14 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import QuestionEditor from '../components/QuestionEditor';
+import { Card, CardContent, CardHeader, CardFooter, CardTitle, CardDescription } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Textarea } from '../components/ui/textarea';
+// Badge not required here; question summaries removed
 
+//<Button variant="secondary" onClick={() => navigate('/survey/preview', { state: { survey } })}>Preview</Button>
 // Initial structure for a new survey
 const initialSurveyState = {
     title: '',
@@ -238,57 +245,47 @@ export const CreateSurvey = () => {
 
     // Survey Builder Mode (The main view)
     return (
-        <div className="container">
-            <h1 className="text-4xl font-bold">Build Your Survey</h1>
-            <p className="text-gray-600 mb-6">Create or edit your survey. Add questions, choose types, set required fields, and manage options.</p>
+        <div className="max-w-3xl mx-auto space-y-6">
+            <Card className="bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200">
+                <CardHeader>
+                    <CardTitle>Survey Details</CardTitle>
+                    <CardDescription>Create or edit your survey. Add questions and manage options.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="title">Survey Title</Label>
+                        <Input
+                            id="title"
+                            name="title"
+                            placeholder="Add your title here"
+                            value={survey.title}
+                            onChange={handleSurveyDetailChange}
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="description">Survey Description</Label>
+                        <Textarea
+                            id="description"
+                            name="description"
+                            placeholder="What is the purpose of this survey"
+                            value={survey.description}
+                            onChange={handleSurveyDetailChange}
+                            rows={4}
+                        />
+                    </div>
+                </CardContent>
+            </Card>
 
-            {/* Action Buttons */}
-            <div className="flex space-x-3 mb-4">
-                <button onClick={() => setIsPreviewMode(true)} className="bg-[#415a77] text-white py-2 px-4 rounded-lg shadow-md hover:bg-[#1b263b]">
-                    Preview Survey
-                </button>
-                <button onClick={() => handleSave('draft')} disabled={isSaving} className="bg-gray-400 text-white py-2 px-4 rounded-lg shadow-md">
-                    {isSaving ? 'Saving Draft...' : 'Save Draft'}
-                </button>
-                <button onClick={() => handleSave('published')} disabled={isSaving || !survey.title || survey.questions.length === 0} className="bg-[#0d1b2a] text-white py-2 px-4 rounded-lg shadow-md hover:bg-[#1b263b]">
-                    Publish Survey
-                </button>
+            {/* Question summaries removed to avoid miniature duplicates; editors below remain */}
+
+            <div className="flex space-x-2">
+                <Button onClick={() => handleAddQuestion('multiple_choice')}>+ Multiple Choice</Button>
+                <Button onClick={() => handleAddQuestion('checkbox')}>+ Checkbox</Button>
+                <Button onClick={() => handleAddQuestion('short_answer')}>+ Short Answer</Button>
             </div>
 
-            <div className="survey-details mb-8 border p-6 rounded shadow">
-                <h2 className="text-2xl mb-4">Survey Details</h2>
-                <div>
-                    <label>Survey Title</label>
-                    <input
-                    type="text"
-                    name="title"
-                    placeholder="Add your title here"
-                    value={survey.title}
-                    onChange={handleSurveyDetailChange}
-                    className="w-full p-2 border rounded mb-3"
-                />
-                </div>
-                <div>
-                    <label>Survey Description</label>
-                <textarea
-                    name="description"
-                    placeholder="What is the purpose of this survey"
-                    value={survey.description}
-                    onChange={handleSurveyDetailChange}
-                    rows="4"
-                    className="w-full p-2 border rounded"
-                />
-                </div>
-            </div>
-
-            <div className="questions-section">
-                <h2 className="text-2xl mb-4">Questions ({survey.questions.length})</h2>
-                <div className="flex space-x-2 mb-6">
-                    <button onClick={() => handleAddQuestion('multiple_choice')} className="bg-gray-700 text-white p-2 rounded">+ Multiple Choice</button>
-                    <button onClick={() => handleAddQuestion('checkbox')} className="bg-gray-700 text-white p-2 rounded">+ Checkbox</button>
-                    <button onClick={() => handleAddQuestion('short_answer')} className="bg-gray-700 text-white p-2 rounded">+ Short Answer</button>
-                </div>
-
+            {/* Render the detailed QuestionEditor components for editing */}
+            <div className="space-y-3">
                 {survey.questions.map((q, index) => (
                     <QuestionEditor
                         key={index}
@@ -309,6 +306,30 @@ export const CreateSurvey = () => {
                     <p className="text-gray-500 italic">No questions yet. Use the buttons above to get started.</p>
                 )}
             </div>
+
+            <Card className="bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200">
+                <CardContent className="pt-6">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-gray-900">Ready to save your survey?</p>
+                            <p className="text-gray-600">{survey.questions.length} question{survey.questions.length !== 1 ? 's' : ''} added</p>
+                        </div>
+                                {/* Action Buttons */}
+                        <div className="flex space-x-3 mb-4">
+                            <button onClick={() => setIsPreviewMode(true)} className="bg-[#415a77] text-white py-2 px-4 rounded-lg shadow-md hover:bg-[#1b263b]">
+                                Preview Survey
+                            </button>
+                            <button onClick={() => handleSave('draft')} disabled={isSaving} className="bg-gray-400 text-white py-2 px-4 rounded-lg shadow-md">
+                                {isSaving ? 'Saving Draft...' : 'Save Draft'}
+                            </button>
+                            <button onClick={() => handleSave('published')} disabled={isSaving || !survey.title || survey.questions.length === 0} className="bg-[#0d1b2a] text-white py-2 px-4 rounded-lg shadow-md hover:bg-[#1b263b]">
+                                Publish Survey
+                            </button>
+                        </div>
+                        
+                    </div>
+                </CardContent>
+            </Card>
         </div>
     );
 };

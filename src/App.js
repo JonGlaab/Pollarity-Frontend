@@ -5,12 +5,9 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Logout from './pages/Logout';
 import Home from './pages/Home';
+import UserDash from './pages/UserDash';
 import { CreateSurvey } from './pages/CreateSurvey';
 
-import { UISurveyCreate } from './pages/UISurveyCreate';
-//import { BrowseSurvey } from "./pages/BrowseSurvey";
-//import { TakeSurvey } from "./pages/TakeSurvey";
-//import { SurveyResultsPage } from "./pages/SurveyResultsPage";
 import AdminDashboard from './pages/AdminDashboard';
 
 axios.defaults.baseURL = process.env.REACT_APP_API_URL;
@@ -69,7 +66,7 @@ function Navbar() {
                   {" | "}
                   <Link to="/survey/create">Create Survey</Link>
                    {" | "}
-                  <Link to="/survey/othercreate">Create Survey</Link>
+                  <Link to="/userdash">User Dashboard</Link>
               </>
           )}
         </div>
@@ -100,7 +97,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/logout" element={<Logout />} />
             <Route path="/survey/create" element={<UserRoute><CreateSurvey /></UserRoute>} />
-            <Route path="/survey/othercreate" element={<UserRoute><UISurveyCreate /></UserRoute>} />
+            <Route path="/userdash" element={<UserDash />} />
             <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
         </Routes>
       </div>
