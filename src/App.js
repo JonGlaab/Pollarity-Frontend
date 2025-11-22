@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import {BrowserRouter as Router, Routes, Route, Link} from "react-router-dom";
+import {BrowserRouter as Router, Routes, Route, Link, Navigate} from "react-router-dom";
 import axios from "axios";
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -34,7 +34,6 @@ const UserRoute = ({ children }) => {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
 
-    // If an admin tries to access a user page, send them to dashboard
     if (token && role === "admin") {
         return <Navigate to="/admin" />;
     }
@@ -96,7 +95,7 @@ function App() {
         <Navbar />
       <div className="App">
         <Routes>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<UserRoute><Home /></UserRoute>} />
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
             <Route path="/logout" element={<Logout />} />
