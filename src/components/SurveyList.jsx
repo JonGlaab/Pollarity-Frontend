@@ -15,9 +15,9 @@ export function SurveyList({
 }) {
   if (surveys.length === 0) {
     return (
-      <Card className="bg-white border-[#778da9]">
+      <Card>
         <CardContent className="pt-12 pb-12 text-center">
-          <p className="text-[#415a77]">
+          <p className="text-gray-600">
             {isDrafts ? 'No draft surveys yet. Create one to get started!' : 
              isPastSurveys ? 'No closed surveys yet.' :
              'No surveys available at the moment.'}
@@ -30,36 +30,36 @@ export function SurveyList({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {surveys.map((survey) => (
-        <Card key={survey.id} className="hover:shadow-lg transition-shadow bg-white border-[#778da9]">
+        <Card key={survey.id} className="hover:shadow-lg transition-shadow">
           <CardHeader>
             <div className="flex items-start justify-between gap-2">
-              <CardTitle className="flex-1 text-[#0d1b2a]">{survey.title}</CardTitle>
+              <CardTitle className="flex-1">{survey.title}</CardTitle>
               <div className="flex flex-col gap-1">
                 {survey.status === 'closed' && (
-                  <Badge variant="secondary" className="bg-[#778da9] text-white">
+                  <Badge variant="secondary">
                     <Lock className="size-3 mr-1" />
                     Closed
                   </Badge>
                 )}
                 {survey.status === 'draft' && (
-                  <Badge variant="secondary" className="bg-[#415a77] text-white">
+                  <Badge variant="secondary">
                     Draft
                   </Badge>
                 )}
                 {survey.responses !== undefined && (
-                  <Badge variant="secondary" className="bg-[#778da9] text-white">
+                  <Badge variant="secondary">
                     {survey.responses || 0} responses
                   </Badge>
                 )}
               </div>
             </div>
-            <CardDescription className="text-[#415a77]">{survey.description}</CardDescription>
+            <CardDescription>{survey.description}</CardDescription>
             {survey.createdAt && (
-              <p className="text-[#778da9]">Created: {survey.createdAt}</p>
+              <p className="text-gray-600">Created: {survey.createdAt}</p>
             )}
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-2 text-[#415a77]">
+            <div className="flex items-center gap-2 text-gray-600">
               <ClipboardCheck className="size-4" />
               <span>{survey.questions.length} questions</span>
             </div>
@@ -69,7 +69,7 @@ export function SurveyList({
               <>
                 <Button 
                   onClick={() => onPublishDraft?.(survey.id)} 
-                  className="flex-1 bg-[#415a77] hover:bg-[#1b263b] text-white"
+                  className="flex-1"
                 >
                   <Upload className="size-4 mr-2" />
                   Publish
@@ -85,7 +85,7 @@ export function SurveyList({
             ) : isPastSurveys ? (
               <Button 
                 onClick={() => onViewResults(survey)} 
-                className="w-full bg-[#415a77] hover:bg-[#1b263b] text-white"
+                className="w-full"
               >
                 <BarChart3 className="size-4 mr-2" />
                 View Results
@@ -94,14 +94,14 @@ export function SurveyList({
               <>
                 <Button 
                   onClick={() => onTakeSurvey(survey)} 
-                  className="flex-1 bg-[#415a77] hover:bg-[#1b263b] text-white"
+                  className="flex-1"
                 >
                   Take Survey
                 </Button>
                 <Button 
                   onClick={() => onViewResults(survey)} 
                   variant="outline"
-                  className="flex-1 border-[#778da9] text-[#415a77] hover:bg-[#e0e1dd]"
+                  className="flex-1"
                 >
                   <BarChart3 className="size-4 mr-2" />
                   Results
