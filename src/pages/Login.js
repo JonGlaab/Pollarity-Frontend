@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import axios from 'axios';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
@@ -16,6 +16,21 @@ const GoogleIcon = () => (
 
 function Login() {
     let navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+
+    useEffect(() => {
+        const token = searchParams.get("token");
+
+        if (token) {
+            localStorage.setItem("token", token);
+            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            window.dispatchEvent(new Event('authChange'));
+
+            localStorage.setItem("role", "user");
+
+            navigate("/");
+        }
+    }, [searchParams, navigate]);
 
     const initialValues = {
         email: "",
@@ -50,7 +65,6 @@ function Login() {
         try {
             const response = await axios.post("/api/auth/login", data);
 
-            // FIX: Check if response.data exists AND contains the token
             const token = response.data?.token;
             const user= response.data?.user;
 
@@ -65,7 +79,6 @@ function Login() {
                     navigate("/");
                 }
             } else {
-                // New: Handle case where 200 OK is received but no token is in the body
                 console.error("Login failed: Server returned 200 OK but no token.");
                 alert("Login failed due to unexpected server response.");
             }
