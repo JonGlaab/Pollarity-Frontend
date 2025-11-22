@@ -13,6 +13,7 @@ function Logout() {
                 console.error("Logout error:", err);
             } finally {
                 localStorage.removeItem("token");
+                localStorage.removeItem("role");
                 delete axios.defaults.headers.common['Authorization'];
                 window.dispatchEvent(new Event('authChange'));
                 navigate("/login");

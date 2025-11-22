@@ -21,6 +21,26 @@ if (typeof window !== 'undefined') {
     axios.defaults.headers.common['Authorization'] = `Bearer ${existingToken}`;
   }
 }
+const AdminRoute = ({ children }) => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
+    if (!token) return <Navigate to="/login" />;
+    if (role !== "admin") return <Navigate to="/" />;
+
+    return children;
+};
+const UserRoute = ({ children }) => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
+    // If an admin tries to access a user page, send them to dashboard
+    if (token && role === "admin") {
+        return <Navigate to="/admin" />;
+    }
+
+    return children;
+};
 
 function Navbar() {
   const [isAuthenticated, setIsAuthenticated] = useState(
@@ -80,9 +100,9 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
             <Route path="/logout" element={<Logout />} />
-            <Route path="/survey/create" element={<CreateSurvey />} />
-            <Route path="/survey/othercreate" element={<UISurveyCreate />} />
-            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/survey/create" element={<UserRoute><CreateSurvey /></UserRoute>} />
+            <Route path="/survey/othercreate" element={<UserRoute><UISurveyCreate /></UserRoute>} />
+            <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
         </Routes>
       </div>
     </Router>

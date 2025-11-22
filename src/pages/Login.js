@@ -52,12 +52,18 @@ function Login() {
 
             // FIX: Check if response.data exists AND contains the token
             const token = response.data?.token;
+            const user= response.data?.user;
 
             if (token) {
                 localStorage.setItem("token", token);
+                localStorage.setItem("role", user?.role || 'user');
                 axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
                 window.dispatchEvent(new Event('authChange'));
-                navigate("/");
+                if (user?.role === 'admin') {
+                    navigate("/admin");
+                } else {
+                    navigate("/");
+                }
             } else {
                 // New: Handle case where 200 OK is received but no token is in the body
                 console.error("Login failed: Server returned 200 OK but no token.");
