@@ -86,10 +86,10 @@ export function CreateSurvey({ onCreate, onSaveDraft }) {
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       {/* Survey Details */}
-      <Card className="bg-white border-[#778da9]">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-[#0d1b2a]">Survey Details</CardTitle>
-          <CardDescription className="text-[#415a77]">Basic information about your survey</CardDescription>
+          <CardTitle>Survey Details</CardTitle>
+          <CardDescription>Basic information about your survey</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
@@ -116,28 +116,28 @@ export function CreateSurvey({ onCreate, onSaveDraft }) {
 
       {/* Questions List */}
       {questions.length > 0 && (
-        <Card className="bg-white border-[#778da9]">
+        <Card>
           <CardHeader>
-            <CardTitle className="text-[#0d1b2a]">Questions ({questions.length})</CardTitle>
+            <CardTitle>Questions ({questions.length})</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {questions.map((question, index) => (
               <div
                 key={question.id}
-                className="flex items-start gap-3 p-4 bg-[#e0e1dd] rounded-lg border border-[#778da9]"
+                className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg border"
               >
-                <GripVertical className="size-5 text-[#778da9] mt-1" />
+                <GripVertical className="size-5 text-gray-400 mt-1" />
                 <div className="flex-1 space-y-2">
                   <div className="flex items-start justify-between gap-2">
-                    <p className="flex-1 text-[#0d1b2a]">{question.question}</p>
+                    <p className="flex-1">{question.question}</p>
                     {question.required && (
-                      <Badge variant="secondary" className="bg-[#415a77] text-white">Required</Badge>
+                      <Badge variant="secondary">Required</Badge>
                     )}
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="border-[#778da9] text-[#415a77]">{question.type}</Badge>
+                    <Badge variant="outline">{question.type}</Badge>
                     {question.options && (
-                      <span className="text-[#415a77]">{question.options.length} options</span>
+                      <span className="text-gray-600">{question.options.length} options</span>
                     )}
                   </div>
                 </div>
@@ -155,10 +155,10 @@ export function CreateSurvey({ onCreate, onSaveDraft }) {
       )}
 
       {/* Add Question */}
-      <Card className="bg-white border-[#778da9]">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-[#0d1b2a]">Add Question</CardTitle>
-          <CardDescription className="text-[#415a77]">Create a new question for your survey</CardDescription>
+          <CardTitle>Add Question</CardTitle>
+          <CardDescription>Create a new question for your survey</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
@@ -256,7 +256,6 @@ export function CreateSurvey({ onCreate, onSaveDraft }) {
           <Button 
             onClick={handleAddQuestion} 
             disabled={!editingQuestion.question}
-            className="bg-[#415a77] hover:bg-[#1b263b] text-white"
           >
             <Plus className="size-4 mr-2" />
             Add Question
@@ -265,12 +264,12 @@ export function CreateSurvey({ onCreate, onSaveDraft }) {
       </Card>
 
       {/* Create Survey Button */}
-      <Card className="bg-gradient-to-br from-[#415a77] to-[#778da9] border-[#778da9]">
+      <Card className="bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200">
         <CardContent className="pt-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-white">Ready to create your survey?</p>
-              <p className="text-[#e0e1dd]">
+              <p className="text-gray-900">Ready to create your survey?</p>
+              <p className="text-gray-600">
                 {questions.length} question{questions.length !== 1 ? 's' : ''} added
               </p>
             </div>
@@ -279,7 +278,6 @@ export function CreateSurvey({ onCreate, onSaveDraft }) {
                 onClick={handleSaveDraft}
                 disabled={!title || questions.length === 0}
                 variant="outline"
-                className="bg-white text-[#415a77] border-white hover:bg-[#e0e1dd]"
               >
                 Save as Draft
               </Button>
@@ -287,7 +285,6 @@ export function CreateSurvey({ onCreate, onSaveDraft }) {
                 onClick={handleCreateSurvey}
                 disabled={!title || questions.length === 0}
                 size="lg"
-                className="bg-[#0d1b2a] hover:bg-[#1b263b] text-white"
               >
                 Publish Survey
               </Button>
