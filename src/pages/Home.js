@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 const SAMPLE_SURVEYS = [
     {
         survey_id: 'demo-1',
+        nice_url: 'demo1niceurl',
         title: 'Customer Satisfaction (Demo)',
         createdAt: new Date().toISOString(),
         User: { first_name: 'Demo', last_name: 'Author' },
@@ -17,6 +18,7 @@ const SAMPLE_SURVEYS = [
     },
     {
         survey_id: 'demo-2',
+        nice_url: 'demo2niceurl',
         title: 'Event Interest (Demo)',
         createdAt: new Date().toISOString(),
         User: { first_name: 'Demo', last_name: 'Organizer' },
@@ -65,6 +67,8 @@ export const Home = () => {
         fetchSurveys();
     }, [navigate]);
 
+    console.log("Surveys from API:", listOfSurveys);
+
 
     return (
         <>
@@ -80,13 +84,15 @@ export const Home = () => {
                         {(listOfSurveys && listOfSurveys.length > 0 ? listOfSurveys : SAMPLE_SURVEYS).map((s) => (
                             <div key={s.survey_id} className="bg-white rounded-lg shadow p-4">
                                 <h3 className="text-xl font-semibold">{s.title}</h3>
-                                <p className="text-sm text-gray-500">By {s.User?.first_name} {s.User?.last_name}</p>
+                                <h3 className="text-xl font-semibold">{s.nice_url} or whatever here</h3>
+
+                                <p className="text-sm text-gray-500">By {s.User?.first_name}</p>
                                 <p className="text-xs text-gray-400">{new Date(s.createdAt).toLocaleDateString()}</p>
                                 <div className="mt-4 flex justify-between items-center">
                                     <span className="text-gray-600 text-sm">{s.questions ? s.questions.length : 0} question{s.questions && s.questions.length !== 1 ? 's' : ''}</span>
                                     <div className="flex gap-2">
                                         <button
-                                            onClick={() => navigate('/userdash', { state: { survey: s, fromHome: true } })}
+                                            onClick={() => navigate(`/survey/${s.nice_url}`) }
                                             className="bg-blue-600 text-white px-3 py-1 rounded"
                                         >
                                             Answer

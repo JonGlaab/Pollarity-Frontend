@@ -7,6 +7,7 @@ import Logout from './pages/Logout';
 import Home from './pages/Home';
 import UserDash from './pages/UserDash';
 import { CreateSurvey } from './pages/CreateSurvey';
+import ViewSurvey from './pages/ViewSurvey';
 
 import AdminDashboard from './pages/AdminDashboard';
 
@@ -97,6 +98,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/logout" element={<Logout />} />
             <Route path="/survey/create" element={<UserRoute><CreateSurvey /></UserRoute>} />
+            <Route path="/survey/:niceUrl" element={<ViewSurvey />} />
             <Route path="/userdash" element={<UserDash />} />
             <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
         </Routes>
