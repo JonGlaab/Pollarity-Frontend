@@ -11,6 +11,7 @@ import { UISurveyCreate } from './pages/UISurveyCreate';
 //import { BrowseSurvey } from "./pages/BrowseSurvey";
 //import { TakeSurvey } from "./pages/TakeSurvey";
 //import { SurveyResultsPage } from "./pages/SurveyResultsPage";
+import AdminDashboard from './pages/AdminDashboard';
 
 axios.defaults.baseURL = process.env.REACT_APP_API_URL;
 
@@ -81,6 +82,7 @@ function App() {
             <Route path="/logout" element={<Logout />} />
             <Route path="/survey/create" element={<CreateSurvey />} />
             <Route path="/survey/othercreate" element={<UISurveyCreate />} />
+            <Route path="/admin" element={<AdminDashboard />} />
         </Routes>
       </div>
     </Router>
