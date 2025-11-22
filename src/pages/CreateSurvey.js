@@ -7,6 +7,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
+import { Checkbox } from '../components/ui/checkbox';
 // Badge not required here; question summaries removed
 
 //<Button variant="secondary" onClick={() => navigate('/survey/preview', { state: { survey } })}>Preview</Button>
@@ -15,6 +16,7 @@ const initialSurveyState = {
     title: '',
     description: '',
     status: 'draft',
+    is_public: false,
     questions: [], // Array to hold all question objects
 };
 
@@ -44,6 +46,13 @@ export const CreateSurvey = () => {
         setSurvey(prev => ({
             ...prev,
             [e.target.name]: e.target.value,
+        }));
+    };
+
+    const handleIsPublicChange = (checked) => {
+        setSurvey(prev => ({
+            ...prev,
+            is_public: checked,
         }));
     };
 
@@ -272,6 +281,14 @@ export const CreateSurvey = () => {
                             onChange={handleSurveyDetailChange}
                             rows={4}
                         />
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <Checkbox
+                            id="is_public"
+                            checked={survey.is_public}
+                            onCheckedChange={handleIsPublicChange}
+                        />
+                        <Label htmlFor="is_public">Make survey public</Label>
                     </div>
                 </CardContent>
             </Card>

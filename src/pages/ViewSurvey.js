@@ -49,7 +49,7 @@ export default function ViewSurvey() {
         }
       });
 
-      await axios.post(`/api/surveys/nice/${niceUrl}/submit`, payload);
+      await axios.post(`/api/surveys/${niceUrl}/submit`, payload);
       setSubmitted(true);
     } catch (err) {
       console.error('Submit failed', err);

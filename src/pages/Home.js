@@ -3,64 +3,18 @@ import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const SAMPLE_SURVEYS = [
-    {
-        survey_id: 'demo-1',
-        nice_url: 'demo1niceurl',
-        title: 'Customer Satisfaction (Demo)',
-        createdAt: new Date().toISOString(),
-        User: { first_name: 'Demo', last_name: 'Author' },
-        questions: [
-            { id: 'd1q1', type: 'rating', question: 'How satisfied are you with our product?', required: true },
-            { id: 'd1q2', type: 'multiple-choice', question: 'Which feature do you use the most?', options: ['Search','Profiles','Notifications'], required: true },
-            { id: 'd1q3', type: 'text', question: 'Any additional feedback?', required: false }
-        ]
-    },
-    {
-        survey_id: 'demo-2',
-        nice_url: 'demo2niceurl',
-        title: 'Event Interest (Demo)',
-        createdAt: new Date().toISOString(),
-        User: { first_name: 'Demo', last_name: 'Organizer' },
-        questions: [
-            { id: 'd2q1', type: 'checkbox', question: 'Which event types interest you?', options: ['Music','Workshops','Networking'], required: true },
-            { id: 'd2q2', type: 'text', question: 'What would you like to see at our events?', required: false }
-        ]
-    }
-];
-
 export const Home = () => {
-
-    //const [surveys, setSurveys] = useState([]);
-
 
     const [listOfSurveys, setListOfSurveys] = useState([]);
     const navigate = useNavigate();
 
     useEffect(() => {
         const fetchSurveys = async () => {
-
-            const token = localStorage.getItem("token");
-
-            if (!token) {
-                // No token: show message prompting login — server requires auth for surveys
-                setListOfSurveys([]);
-                return;
-            }
-
             try {
-                const response = await axios.get("/api/surveys", {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                });
+                const response = await axios.get("/api/surveys");
                 setListOfSurveys(response.data);
             } catch (error) {
                 console.error("Failed to grab surveys", error);
-                if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-                    localStorage.removeItem("token");
-                    navigate("/login");
-                }
             }
         };
 
@@ -81,10 +35,9 @@ export const Home = () => {
                          <div className="min-h-screen bg-[#e0e1dd]">
                 <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {(listOfSurveys && listOfSurveys.length > 0 ? listOfSurveys : SAMPLE_SURVEYS).map((s) => (
+                        {listOfSurveys.map((s) => (
                             <div key={s.survey_id} className="bg-white rounded-lg shadow p-4">
                                 <h3 className="text-xl font-semibold">{s.title}</h3>
-                                <h3 className="text-xl font-semibold">{s.nice_url} or whatever here</h3>
 
                                 <p className="text-sm text-gray-500">By {s.User?.first_name}</p>
                                 <p className="text-xs text-gray-400">{new Date(s.createdAt).toLocaleDateString()}</p>
@@ -114,4 +67,3 @@ export const Home = () => {
 }
 
 export default Home;
-
