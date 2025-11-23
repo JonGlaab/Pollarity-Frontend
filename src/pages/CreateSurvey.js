@@ -2,15 +2,14 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import QuestionEditor from '../components/QuestionEditor';
-import { Card, CardContent, CardHeader, CardFooter, CardTitle, CardDescription } from '../components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
 import { Checkbox } from '../components/ui/checkbox';
-// Badge not required here; question summaries removed
+import { WandSparkles } from 'lucide-react';
 
-//<Button variant="secondary" onClick={() => navigate('/survey/preview', { state: { survey } })}>Preview</Button>
 // Initial structure for a new survey
 const initialSurveyState = {
     title: '',
@@ -26,6 +25,7 @@ const initialNewQuestion = {
     question_type: 'multiple_choice',
     is_required: false,
     options: [{ option_text: 'Option 1' }], // Start with one option for MC/Checkbox
+    isGenerated: false // Track if manually created or AI generated
 };
 
 export const CreateSurvey = () => {
@@ -33,6 +33,7 @@ export const CreateSurvey = () => {
     const [survey, setSurvey] = useState(initialSurveyState);
     const [isPreviewMode, setIsPreviewMode] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const [isGenerating, setIsGenerating] = useState(false); // Loading state for AI
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -103,8 +104,8 @@ export const CreateSurvey = () => {
         if (questionIndex === 0) return; // Can't move first question up
 
         const updatedQuestions = [...survey.questions];
-        [updatedQuestions[questionIndex - 1], updatedQuestions[questionIndex]] = 
-        [updatedQuestions[questionIndex], updatedQuestions[questionIndex - 1]];
+        [updatedQuestions[questionIndex - 1], updatedQuestions[questionIndex]] =
+            [updatedQuestions[questionIndex], updatedQuestions[questionIndex - 1]];
 
         // Update question_order for all questions
         const reorderedQuestions = updatedQuestions.map((q, index) => ({
@@ -120,8 +121,8 @@ export const CreateSurvey = () => {
         if (questionIndex === survey.questions.length - 1) return; // Can't move last question down
 
         const updatedQuestions = [...survey.questions];
-        [updatedQuestions[questionIndex], updatedQuestions[questionIndex + 1]] = 
-        [updatedQuestions[questionIndex + 1], updatedQuestions[questionIndex]];
+        [updatedQuestions[questionIndex], updatedQuestions[questionIndex + 1]] =
+            [updatedQuestions[questionIndex + 1], updatedQuestions[questionIndex]];
 
         // Update question_order for all questions
         const reorderedQuestions = updatedQuestions.map((q, index) => ({
@@ -132,10 +133,138 @@ export const CreateSurvey = () => {
         setSurvey(prev => ({ ...prev, questions: reorderedQuestions }));
     };
 
+    // Handler to add a new option to a specific question
+    const handleAddOption = (questionIndex) => {
+        const updatedQuestions = survey.questions.map((q, index) => {
+            if (index === questionIndex) {
+                const newOption = { option_text: `Option ${q.options.length + 1}` };
+                return { ...q, options: [...q.options, newOption] };
+            }
+            return q;
+        });
+        setSurvey(prev => ({ ...prev, questions: updatedQuestions }));
+    };
+
+
+    const handleOptionChange = (questionIndex, optionIndex, value) => {
+        const updatedQuestions = survey.questions.map((q, index) => {
+            if (index === questionIndex) {
+                const updatedOptions = q.options.map((opt, optIndex) => {
+                    if (optIndex === optionIndex) {
+                        return { ...opt, option_text: value };
+                    }
+                    return opt;
+                });
+                return { ...q, options: updatedOptions };
+            }
+            return q;
+        });
+        setSurvey(prev => ({ ...prev, questions: updatedQuestions }));
+    };
+
+
+    const handleRemoveOption = (questionIndex, optionIndex) => {
+        const updatedQuestions = survey.questions.map((q, index) => {
+            if (index === questionIndex) {
+                const updatedOptions = q.options.filter((_, optIndex) => optIndex !== optionIndex);
+                return { ...q, options: updatedOptions };
+            }
+            return q;
+        });
+        setSurvey(prev => ({ ...prev, questions: updatedQuestions }));
+    };
+
+
+    const handleAutoGenerate = async () => {
+        if (!survey.title) return alert("Please enter a title first!");
+
+        setIsGenerating(true);
+        try {
+            const simpleQuestionList = survey.questions.map(q => ({
+                question_text: q.question_text
+            }));
+
+            const res = await axios.post('/api/ai/generate', {
+                title: survey.title,
+                description: survey.description,
+                existing_questions: simpleQuestionList
+            });
+
+            const newBatch = res.data.map((q, i) => ({
+                ...q,
+                question_order: survey.questions.length + i + 1,
+                is_required: q.is_required || false,
+                isGenerated: true
+            }));
+
+            setSurvey(prev => ({
+                ...prev,
+                questions: [...prev.questions, ...newBatch]
+            }));
+        } catch (err) {
+            console.error("AI Error", err);
+            alert("Failed to generate questions. Try again.");
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
+
+    const handleRefineQuestion = async (index) => {
+        const currentQuestion = survey.questions[index];
+        if (!currentQuestion.question_text) return;
+
+        try {
+            const res = await axios.post('/api/ai/refine', {
+                question: {
+                    question_text: currentQuestion.question_text,
+                    question_type: currentQuestion.question_type,
+                    options: currentQuestion.options
+                },
+                survey_title: survey.title,
+                survey_description: survey.description
+            });
+
+            const updatedQuestions = [...survey.questions];
+            updatedQuestions[index] = {
+                ...updatedQuestions[index],
+                aiSuggestion: res.data.result
+            };
+            setSurvey(prev => ({ ...prev, questions: updatedQuestions }));
+
+        } catch (error) {
+            console.error("Refine error", error);
+            alert("Failed to fetch suggestion.");
+        }
+    };
+
+    // --- AI HANDLER: Accept Suggestion ---
+    const handleAcceptSuggestion = (index) => {
+        const updatedQuestions = [...survey.questions];
+        const q = updatedQuestions[index];
+        if (q.aiSuggestion) {
+            updatedQuestions[index] = {
+                ...q,
+                question_text: q.aiSuggestion.question_text,
+                options: q.aiSuggestion.options || q.options,
+                isGenerated: true, // Lock it now
+                aiSuggestion: null
+            };
+            setSurvey(prev => ({ ...prev, questions: updatedQuestions }));
+        }
+    };
+
+    // --- AI HANDLER: Discard Suggestion ---
+    const handleDiscardSuggestion = (index) => {
+        const updatedQuestions = [...survey.questions];
+        updatedQuestions[index] = { ...updatedQuestions[index], aiSuggestion: null };
+        setSurvey(prev => ({ ...prev, questions: updatedQuestions }));
+    };
+
     // Handler to save the survey (POST request)
     const handleSave = async (status) => {
         setIsSaving(true);
-        
+
         // Ensure all questions have correct question_order and options have correct option_order
         const questionsToSave = survey.questions.map((q, index) => {
             const questionData = {
@@ -177,49 +306,8 @@ export const CreateSurvey = () => {
         }
     };
 
-    // Handler to add a new option to a specific question
-    const handleAddOption = (questionIndex) => {
-        const updatedQuestions = survey.questions.map((q, index) => {
-            if (index === questionIndex) {
-                const newOption = { option_text: `Option ${q.options.length + 1}` };
-                return { ...q, options: [...q.options, newOption] };
-            }
-            return q;
-        });
-        setSurvey(prev => ({ ...prev, questions: updatedQuestions }));
-    };
-
-// Handler to change the text of a specific option
-    const handleOptionChange = (questionIndex, optionIndex, value) => {
-        const updatedQuestions = survey.questions.map((q, index) => {
-            if (index === questionIndex) {
-                const updatedOptions = q.options.map((opt, optIndex) => {
-                    if (optIndex === optionIndex) {
-                        return { ...opt, option_text: value };
-                    }
-                    return opt;
-                });
-                return { ...q, options: updatedOptions };
-            }
-            return q;
-        });
-        setSurvey(prev => ({ ...prev, questions: updatedQuestions }));
-    };
-
-// Handler to remove a specific option
-    const handleRemoveOption = (questionIndex, optionIndex) => {
-        const updatedQuestions = survey.questions.map((q, index) => {
-            if (index === questionIndex) {
-                const updatedOptions = q.options.filter((_, optIndex) => optIndex !== optionIndex);
-                return { ...q, options: updatedOptions };
-            }
-            return q;
-        });
-        setSurvey(prev => ({ ...prev, questions: updatedQuestions }));
-    };
-
     if (isPreviewMode) {
-        // Simple Preview Mode
+
         return (
             <div className="survey-preview-page p-8">
                 <button className="bg-gray-200 p-2 rounded" onClick={() => setIsPreviewMode(false)}>
@@ -252,7 +340,7 @@ export const CreateSurvey = () => {
         );
     }
 
-    // Survey Builder Mode (The main view)
+
     return (
         <div className="max-w-3xl mx-auto space-y-6">
             <Card className="bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200">
@@ -282,7 +370,24 @@ export const CreateSurvey = () => {
                             rows={4}
                         />
                     </div>
-                    <div className="flex items-center space-x-2">
+
+
+                    <div className="pt-2">
+                        <Button
+                            onClick={handleAutoGenerate}
+                            disabled={isGenerating || !survey.title}
+                            type="button"
+                            className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white border-none shadow-md hover:shadow-lg transition-all"
+                        >
+                            {isGenerating ? (
+                                <><span className="animate-spin mr-2">✨</span> Dreaming up ideas...</>
+                            ) : (
+                                <><WandSparkles className="mr-2" size={16}/> Auto-Generate 5 Questions</>
+                            )}
+                        </Button>
+                    </div>
+
+                    <div className="flex items-center space-x-2 mt-4">
                         <Checkbox
                             id="is_public"
                             checked={survey.is_public}
@@ -293,15 +398,13 @@ export const CreateSurvey = () => {
                 </CardContent>
             </Card>
 
-            {/* Question summaries removed to avoid miniature duplicates; editors below remain */}
-
             <div className="flex space-x-2">
                 <Button onClick={() => handleAddQuestion('multiple_choice')}>+ Multiple Choice</Button>
                 <Button onClick={() => handleAddQuestion('checkbox')}>+ Checkbox</Button>
                 <Button onClick={() => handleAddQuestion('short_answer')}>+ Short Answer</Button>
             </div>
 
-            {/* Render the detailed QuestionEditor components for editing */}
+
             <div className="space-y-3">
                 {survey.questions.map((q, index) => (
                     <QuestionEditor
@@ -316,6 +419,9 @@ export const CreateSurvey = () => {
                         handleAddOption={handleAddOption}
                         handleOptionChange={handleOptionChange}
                         handleRemoveOption={handleRemoveOption}
+                        handleRefineQuestion={handleRefineQuestion}
+                        handleAcceptSuggestion={handleAcceptSuggestion}
+                        handleDiscardSuggestion={handleDiscardSuggestion}
                     />
                 ))}
 
@@ -331,7 +437,7 @@ export const CreateSurvey = () => {
                             <p className="text-gray-900">Ready to save your survey?</p>
                             <p className="text-gray-600">{survey.questions.length} question{survey.questions.length !== 1 ? 's' : ''} added</p>
                         </div>
-                                {/* Action Buttons */}
+                        {/* Action Buttons */}
                         <div className="flex space-x-3 mb-4">
                             <button onClick={() => setIsPreviewMode(true)} className="bg-[#415a77] text-white py-2 px-4 rounded-lg shadow-md hover:bg-[#1b263b]">
                                 Preview Survey
@@ -343,7 +449,7 @@ export const CreateSurvey = () => {
                                 Publish Survey
                             </button>
                         </div>
-                        
+
                     </div>
                 </CardContent>
             </Card>

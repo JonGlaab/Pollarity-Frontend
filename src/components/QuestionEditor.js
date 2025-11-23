@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { WandSparkles, Check, X, ArrowRight } from 'lucide-react';
 
-// This component handles the editing of a single question and its options.
 const QuestionEditor = ({
                             question,
                             index,
@@ -11,18 +11,105 @@ const QuestionEditor = ({
                             handleMoveQuestionDown,
                             handleAddOption,
                             handleOptionChange,
-                            handleRemoveOption }) => {
+                            handleRemoveOption,
+                            handleRefineQuestion,
+                            handleAcceptSuggestion,
+                            handleDiscardSuggestion
+                        }) => {
+    const [isRefining, setIsRefining] = useState(false);
 
-    // TODO: Need to implement option handlers (add, remove, change text)
+    const onRefineClick = async () => {
+        setIsRefining(true);
+        await handleRefineQuestion(index);
+        setIsRefining(false);
+    };
 
     const isOptionQuestion = ['multiple_choice', 'checkbox'].includes(question.question_type);
 
+
+    if (question.aiSuggestion) {
+        return (
+            <div className="mb-6 p-1 border-2 border-indigo-200 rounded-lg shadow-lg bg-indigo-50 overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+                <div className="bg-indigo-100 p-3 flex justify-between items-center border-b border-indigo-200">
+                    <div className="flex items-center gap-2 text-indigo-800 font-bold">
+                        <WandSparkles size={18} />
+                        <span>AI Suggestion</span>
+                    </div>
+                    <div className="text-xs text-indigo-600">Compare and choose a version</div>
+                </div>
+
+                <div className="flex flex-col md:flex-row">
+
+                    <div className="flex-1 p-4 bg-white border-r border-gray-200 opacity-60">
+                        <h4 className="text-xs uppercase text-gray-500 font-bold mb-2">Original</h4>
+                        <div className="p-2 border rounded bg-gray-50 text-gray-700 mb-3 text-sm">
+                            {question.question_text}
+                        </div>
+                        {question.options && question.options.map((opt, i) => (
+                            <div key={i} className="text-xs text-gray-500 ml-2 mb-1">• {opt.option_text}</div>
+                        ))}
+                        <button
+                            onClick={() => handleDiscardSuggestion(index)}
+                            className="mt-4 w-full py-2 flex items-center justify-center gap-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-100 text-sm transition-colors"
+                        >
+                            <X size={14} /> Keep Original
+                        </button>
+                    </div>
+
+
+                    <div className="hidden md:flex flex-col justify-center items-center p-2 text-indigo-300">
+                        <ArrowRight size={20} />
+                    </div>
+
+
+                    <div className="flex-1 p-4 bg-white">
+                        <h4 className="text-xs uppercase text-indigo-600 font-bold mb-2">✨ Polished</h4>
+                        <div className="p-2 border border-indigo-200 rounded bg-indigo-50 text-indigo-900 mb-3 text-sm font-medium">
+                            {question.aiSuggestion.question_text}
+                        </div>
+                        {question.aiSuggestion.options && question.aiSuggestion.options.map((opt, i) => (
+                            <div key={i} className="text-xs text-indigo-700 ml-2 mb-1">• {opt.option_text}</div>
+                        ))}
+                        <button
+                            onClick={() => handleAcceptSuggestion(index)}
+                            className="mt-4 w-full py-2 flex items-center justify-center gap-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm font-bold shadow-sm transition-colors"
+                        >
+                            <Check size={14} /> Use AI Version
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+
     return (
-        <div className="question-editor mb-6 p-4 border-2 rounded-lg shadow-md">
+        <div className={`question-editor mb-6 p-4 border-2 rounded-lg shadow-md ${question.isGenerated ? 'border-indigo-200 bg-indigo-50/10' : ''}`}>
             <div className="flex justify-between items-center mb-3">
                 <div className="flex items-center space-x-2">
                     <h3 className="text-lg font-semibold">Question {index + 1}</h3>
-                    {/* Reorder Buttons */}
+
+
+                    {question.isGenerated ? (
+                        <span className="ml-2 flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold text-indigo-400 bg-indigo-50 px-2 py-1 rounded border border-indigo-100 select-none">
+                           <Check size={10} /> AI Locked
+                        </span>
+                    ) : (
+
+                        question.question_text && question.question_text.length > 5 && (
+                            <button
+                                onClick={onRefineClick}
+                                disabled={isRefining}
+                                className="ml-2 flex items-center gap-1 text-xs bg-indigo-50 text-indigo-600 border border-indigo-200 px-2 py-1 rounded-full hover:bg-indigo-100 transition-all"
+                                title="Refine with AI (One-time use)"
+                            >
+                                {isRefining ? <span className="animate-spin">✨</span> : <WandSparkles size={12} />}
+                                {isRefining ? "Polishing..." : "Refine"}
+                            </button>
+                        )
+                    )}
+
+
                     <div className="flex flex-col space-y-1 ml-2">
                         <button
                             onClick={() => handleMoveQuestionUp(index)}
@@ -91,14 +178,12 @@ const QuestionEditor = ({
                     ) : (
                         question.options.map((opt, optIndex) => (
                             <div key={optIndex} className="flex items-center space-x-2 mb-2">
-                                {/* Radio/Checkbox icon placeholder */}
                                 <input
                                     type={question.question_type === 'multiple_choice' ? 'radio' : 'checkbox'}
                                     disabled
                                     className="mr-2"
                                 />
 
-                                {/* Option Text Input */}
                                 <input
                                     type="text"
                                     value={opt.option_text || ''}
@@ -107,7 +192,6 @@ const QuestionEditor = ({
                                     className="flex-grow p-1 border rounded"
                                 />
 
-                                {/* Remove Option Button */}
                                 <button
                                     onClick={() => handleRemoveOption(index, optIndex)}
                                     className="text-red-400 hover:text-red-600 text-lg px-2"
@@ -119,7 +203,6 @@ const QuestionEditor = ({
                         ))
                     )}
 
-                    {/* Add Option button */}
                     <button
                         onClick={() => handleAddOption(index)}
                         className="text-sm text-blue-500 hover:text-blue-700 hover:underline mt-2 px-2 py-1 rounded hover:bg-blue-50"
