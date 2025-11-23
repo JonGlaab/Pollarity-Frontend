@@ -60,7 +60,7 @@ const QuestionEditor = ({
                         <ArrowRight size={20} />
                     </div>
 
-                    
+
                     <div className="flex-1 p-4 bg-white">
                         <h4 className="text-xs uppercase text-indigo-600 font-bold mb-2">✨ Polished</h4>
                         <div className="p-2 border border-indigo-200 rounded bg-indigo-50 text-indigo-900 mb-3 text-sm font-medium">

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import {BrowserRouter as Router, Routes, Route, Link, Navigate} from "react-router-dom";
+import {BrowserRouter as Router, Routes, Route, Link, Navigate, useSearchParams, useNavigate} from "react-router-dom";
 import axios from "axios";
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -12,6 +12,31 @@ import ViewSurvey from './pages/ViewSurvey';
 import AdminDashboard from './pages/AdminDashboard';
 
 axios.defaults.baseURL = process.env.REACT_APP_API_URL;
+
+function AuthHandler() {
+    const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        const token = searchParams.get("token");
+        if (token) {
+
+            localStorage.setItem("token", token);
+            localStorage.setItem("role", "user");
+
+
+            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+
+            window.dispatchEvent(new Event('authChange'));
+
+
+            navigate("/", { replace: true });
+        }
+    }, [searchParams, navigate]);
+
+    return null;
+}
 
 if (typeof window !== 'undefined') {
   const existingToken = localStorage.getItem('token');
@@ -90,6 +115,7 @@ function App() {
 
   return (
     <Router>
+        <AuthHandler />
         <Navbar />
       <div className="App">
         <Routes>
