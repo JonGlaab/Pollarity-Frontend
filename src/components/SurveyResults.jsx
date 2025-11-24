@@ -20,9 +20,17 @@ export function SurveyResults({ survey }) {
           <CardDescription className="text-[#415a77]">{survey.description}</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-2 text-[#415a77]">
-            <Users className="size-5" />
-            <span>{totalResponses} total responses</span>
+          <div className="flex items-center gap-6 text-[#415a77]">
+            <div className="flex items-center gap-2"><Users className="size-5" /><span>{totalResponses} total responses</span></div>
+            {survey.unique_respondents !== undefined && (
+              <div className="flex items-center gap-2"><svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H7"/></svg><span>{survey.unique_respondents} unique respondents</span></div>
+            )}
+            {survey.first_response_at && (
+              <div className="text-sm text-gray-600">First: {new Date(survey.first_response_at).toLocaleString()}</div>
+            )}
+            {survey.last_response_at && (
+              <div className="text-sm text-gray-600">Last: {new Date(survey.last_response_at).toLocaleString()}</div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -67,6 +75,57 @@ export function SurveyResults({ survey }) {
                     <Progress value={item.percentage} className="bg-[#e0e1dd]" />
                   </div>
                 ))}
+
+                {result.cooccurrence && result.cooccurrence.length > 0 && (
+                  <div className="mt-4">
+                    <div className="text-sm text-[#415a77] mb-2">Co-selection heatmap (how often options are selected together)</div>
+                    <div className="overflow-auto">
+                      {/* build matrix */}
+                      {
+                        (() => {
+                          const opts = result.data || [];
+                          const idToIndex = {};
+                          opts.forEach((o, idx) => { idToIndex[o.option_id] = idx; });
+                          const size = opts.length;
+                          const matrix = Array.from({ length: size }, () => Array(size).fill(0));
+                          result.cooccurrence.forEach(c => {
+                            const ai = idToIndex[c.a];
+                            const bi = idToIndex[c.b];
+                            if (ai !== undefined && bi !== undefined) {
+                              matrix[ai][bi] = c.count;
+                              matrix[bi][ai] = c.count;
+                            }
+                          });
+
+                          const max = Math.max(...matrix.flat(), 1);
+
+                          return (
+                            <div className="inline-block border rounded">
+                              <div className="grid" style={{ gridTemplateColumns: `120px repeat(${size}, 80px)` }}>
+                                <div className="p-2 font-semibold">&nbsp;</div>
+                                {opts.map((o, i) => <div key={`col-${i}`} className="p-2 text-xs font-medium text-center border-l truncate">{o.option}</div>)}
+                                {opts.map((row, rIdx) => (
+                                  <div key={`row-${rIdx}`} className="flex">
+                                    <div className="p-2 text-sm font-medium border-t truncate">{opts[rIdx].option}</div>
+                                    {matrix[rIdx].map((val, cIdx) => {
+                                      const intensity = Math.round((val / max) * 100);
+                                      const bg = `rgba(59,130,246,${0.08 + (intensity / 100) * 0.9})`;
+                                      return (
+                                        <div key={`cell-${rIdx}-${cIdx}`} className="p-2 text-center border-t border-l" style={{ background: bg, minWidth: 80, height: 48 }}>
+                                          <div className="text-xs">{val}</div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })()
+                      }
+                    </div>
+                  </div>
+                )}
               </div>
             )}
             {result.type === 'rating' && result.data && (

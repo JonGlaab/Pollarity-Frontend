@@ -48,22 +48,25 @@ export const UserDash = () => {
 
     setIsResultsLoading(true);
     try {
-      const res = await axios.get(`/api/surveys/${survey.survey_id}/results`, {
+      const res = await axios.get(`/api/surveys/${survey.survey_id}/aggregates`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
       const payload = res.data;
       const transformed = {
-        title: payload.survey.title,
-        description: payload.survey.description,
-        responses: payload.survey.total_submissions,
-        questions: payload.results.map(q => {
+        title: payload.survey_title || survey.title,
+        description: '',
+        responses: payload.kpis ? parseInt(payload.kpis.total_responses || 0, 10) : 0,
+        unique_respondents: payload.kpis ? parseInt(payload.kpis.unique_respondents || 0, 10) : 0,
+        first_response_at: payload.kpis ? payload.kpis.first_response_at : null,
+        last_response_at: payload.kpis ? payload.kpis.last_response_at : null,
+        questions: (payload.questions || []).map(q => {
           if (['multiple_choice', 'checkbox'].includes(q.question_type)) {
-            const total = q.answers.reduce((sum, a) => sum + (a.count || 0), 0) || 0;
-            const data = q.answers.map(a => ({ option: a.option_text, count: a.count || 0, percentage: total ? Math.round((a.count || 0) / total * 100) : 0 }));
-            return { question: q.question_text, type: q.question_type === 'multiple_choice' ? 'multiple-choice' : 'checkbox', data };
+            const data = (q.options || []).map(o => ({ option_id: o.option_id, option: o.option_text, count: o.count || 0, percentage: o.percentage || 0 }));
+            const outType = q.question_type === 'multiple_choice' ? 'multiple-choice' : 'checkbox';
+            return { question: q.question_text, type: outType, data, cooccurrence: q.cooccurrence || [] };
           } else if (q.question_type === 'short_answer') {
-            return { question: q.question_text, type: 'text', data: q.answers || [] };
+            return { question: q.question_text, type: 'text', data: q.data || [] };
           }
           return { question: q.question_text, type: q.question_type, data: [] };
         })
