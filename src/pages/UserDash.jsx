@@ -5,289 +5,84 @@ import { ClipboardList } from "lucide-react";
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { toast } from 'sonner';
 
-import { SurveyList } from '../components/SurveyList';
-// CreateSurvey moved to page-level; removed from UserDash tabs
 import { SurveyForm } from '../components/SurveyForm';
 import { SurveyResults } from '../components/SurveyResults';
 
 import { Button } from '../components/ui/button';
 
-const SAMPLE_SURVEYS = [
-  {
-    id: "1",
-    title: "Student Feedback Survey",
-    description: "Help us improve your learning experience",
-    responses: 45,
-    status: "published",
-    createdBy: "me",
-    createdAt: "2025-01-15",
-    questions: [
-      {
-        id: "q1",
-        type: "rating",
-        question:
-          "How would you rate the overall course quality?",
-        required: true,
-      },
-      {
-        id: "q2",
-        type: "multiple-choice",
-        question: "What is your preferred learning method?",
-        options: [
-          "Visual",
-          "Auditory",
-          "Reading/Writing",
-          "Kinesthetic",
-        ],
-        required: true,
-      },
-      {
-        id: "q3",
-        type: "checkbox",
-        question:
-          "Which topics would you like to explore more? (Select all that apply)",
-        options: [
-          "Mathematics",
-          "Science",
-          "Literature",
-          "History",
-          "Arts",
-        ],
-        required: false,
-      },
-      {
-        id: "q4",
-        type: "text",
-        question:
-          "What suggestions do you have for improvement?",
-        required: false,
-      },
-    ],
-  },
-  {
-    id: "2",
-    title: "Campus Facilities Survey",
-    description: "Share your thoughts on campus amenities",
-    responses: 32,
-    status: "published",
-    createdBy: "me",
-    createdAt: "2025-02-01",
-    questions: [
-      {
-        id: "q1",
-        type: "rating",
-        question:
-          "How satisfied are you with the library facilities?",
-        required: true,
-      },
-      {
-        id: "q2",
-        type: "multiple-choice",
-        question: "How often do you use the campus cafeteria?",
-        options: [
-          "Daily",
-          "Weekly",
-          "Monthly",
-          "Rarely",
-          "Never",
-        ],
-        required: true,
-      },
-      {
-        id: "q3",
-        type: "text",
-        question:
-          "What new facilities would you like to see on campus?",
-        required: false,
-      },
-    ],
-  },
-  {
-    id: "3",
-    title: "Event Planning Survey",
-    description: "Help us plan better campus events",
-    responses: 67,
-    status: "closed",
-    createdBy: "me",
-    createdAt: "2024-12-10",
-    questions: [
-      {
-        id: "q1",
-        type: "checkbox",
-        question:
-          "What types of events interest you? (Select all that apply)",
-        options: [
-          "Music Concerts",
-          "Sports Events",
-          "Cultural Festivals",
-          "Academic Workshops",
-          "Social Gatherings",
-        ],
-        required: true,
-      },
-      {
-        id: "q2",
-        type: "multiple-choice",
-        question: "What is your preferred time for events?",
-        options: [
-          "Weekday Evenings",
-          "Weekend Mornings",
-          "Weekend Afternoons",
-          "Weekend Evenings",
-        ],
-        required: true,
-      },
-      {
-        id: "q3",
-        type: "text",
-        question:
-          "Any specific event ideas you would like to share?",
-        required: false,
-      },
-    ],
-  },
-];
-
-const SAMPLE_DRAFTS = [
-  {
-    id: "d1",
-    title: "Technology Preferences Survey",
-    description: "Understanding student technology needs",
-    status: "draft",
-    createdBy: "me",
-    createdAt: "2025-03-10",
-    questions: [
-      {
-        id: "q1",
-        type: "multiple-choice",
-        question:
-          "What device do you primarily use for studying?",
-        options: ["Laptop", "Desktop", "Tablet", "Smartphone"],
-        required: true,
-      },
-      {
-        id: "q2",
-        type: "text",
-        question:
-          "What software tools would you like the school to provide?",
-        required: false,
-      },
-    ],
-  },
-  {
-    id: "d2",
-    title: "Extracurricular Activities Survey",
-    description: "Help us plan new clubs and activities",
-    status: "draft",
-    createdBy: "me",
-    createdAt: "2025-03-15",
-    questions: [
-      {
-        id: "q1",
-        type: "checkbox",
-        question: "Which activities interest you?",
-        options: [
-          "Sports",
-          "Music",
-          "Drama",
-          "Debate",
-          "Coding Club",
-        ],
-        required: true,
-      },
-    ],
-  },
-];
-
 export const UserDash = () => {
 
-    const [surveys, setSurveys] = useState(SAMPLE_SURVEYS);
-    const [drafts, setDrafts] = useState(SAMPLE_DRAFTS);
+    const [surveys, setSurveys] = useState([]);
     const [selectedSurvey, setSelectedSurvey] = useState(null);
     const [activeView, setActiveView] = useState("browse");
 
-    const handleTakeSurvey = (survey) => {
-    setSelectedSurvey(survey);
-    setActiveView("take");
-  };
-
   const handleViewResults = (survey) => {
-    setSelectedSurvey(survey);
-    setActiveView("results");
+    const fetchResults = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('Not authenticated');
+        return;
+      }
+
+      try {
+        const res = await axios.get(`/api/surveys/${survey.survey_id}/results`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        const payload = res.data;
+        // Transform server results into the shape SurveyResults expects (with data arrays)
+        const transformed = {
+          title: payload.survey.title,
+          description: payload.survey.description,
+          responses: payload.survey.total_submissions,
+          questions: payload.results.map(q => {
+            if (['multiple_choice', 'checkbox'].includes(q.question_type)) {
+              const total = q.answers.reduce((sum, a) => sum + (a.count || 0), 0) || 0;
+              const data = q.answers.map(a => ({ option: a.option_text, count: a.count || 0, percentage: total ? Math.round((a.count || 0) / total * 100) : 0 }));
+              return { question: q.question_text, type: q.question_type === 'multiple_choice' ? 'multiple-choice' : 'checkbox', data };
+            } else if (q.question_type === 'short_answer') {
+              return { question: q.question_text, type: 'text', data: q.answers || [] };
+            }
+            return { question: q.question_text, type: q.question_type, data: [] };
+          })
+        };
+
+        setSelectedSurvey(transformed);
+        setActiveView('results');
+      } catch (err) {
+        console.error('Failed to fetch results', err);
+        toast.error('Failed to load results');
+      }
+    };
+
+    fetchResults();
   };
 
   const handleSurveySubmit = () => {
-    if (selectedSurvey) {
-      setSurveys(
-        surveys.map((s) =>
-          s.id === selectedSurvey.id
-            ? { ...s, responses: (s.responses || 0) + 1 }
-            : s,
-        ),
-      );
-    }
     setActiveView("browse");
     setSelectedSurvey(null);
   };
 
-   const handleSaveDraft = (survey) => {
-    setDrafts([
-      ...drafts,
-      {
-        ...survey,
-        id: `d${Date.now()}`,
-        status: "draft",
-        createdBy: "me",
-        createdAt: new Date().toISOString().split("T")[0],
-      },
-    ]);
-  };
-
-  const handleCreateSurvey = (survey) => {
-    setSurveys([
-      ...surveys,
-      {
-        ...survey,
-        id: Date.now().toString(),
-        responses: 0,
-        status: "published",
-        createdBy: "me",
-        createdAt: new Date().toISOString().split("T")[0],
-      },
-    ]);
-  };
-
-  const handlePublishDraft = (draftId) => {
-    const draft = drafts.find((d) => d.id === draftId);
-    if (draft) {
-      setSurveys([
-        ...surveys,
-        {
-          ...draft,
-          id: Date.now().toString(),
-          status: "published",
-          responses: 0,
-        },
-      ]);
-      setDrafts(drafts.filter((d) => d.id !== draftId));
+  const handleClose = async (niceUrl) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      toast.error('Not authenticated');
+      return;
     }
-  };
 
-  const handleDeleteDraft = (draftId) => {
-    setDrafts(drafts.filter((d) => d.id !== draftId));
-  };
+    try {
+      await axios.post(`/api/surveys/${niceUrl}/close`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
-  const handleEditDraft = (draft) => {
-    setSelectedSurvey(draft);
-  };
-
-  const handleCloseSurvey = (surveyId) => {
-    setSurveys(
-      surveys.map((s) =>
-        s.id === surveyId ? { ...s, status: "closed" } : s,
-      ),
-    );
+      setSurveys(prev => prev.map(s => s.nice_url === niceUrl ? { ...s, status: 'closed' } : s));
+      toast.success('Survey closed');
+    } catch (err) {
+      console.error('Failed to close survey', err);
+      toast.error('Failed to close survey');
+    }
   };
 
   const handleBack = () => {
@@ -295,37 +90,33 @@ export const UserDash = () => {
     setSelectedSurvey(null);
   };
 
-    const [listOfSurveys, setListOfSurveys] = useState([]);
     const navigate = useNavigate();
     const location = useLocation();
 
     useEffect(() => {
-        const fetchSurveys = async () => {
+      const fetchSurveys = async () => {
+        const token = localStorage.getItem("token");
 
-            const token = localStorage.getItem("token");
+        if (!token) {
+          navigate("/");
+          return;
+        }
 
-            if (!token) {
-                navigate("/");
-                return;
-            }
+        try {
+          const response = await axios.get("/api/surveys/mine", {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          setSurveys(response.data || []);
+        } catch (error) {
+          console.error("Failed to fetch your surveys", error);
+          if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+            localStorage.removeItem("token");
+            navigate("/login");
+          }
+        }
+      };
 
-            try {
-                const response = await axios.get("/api/surveys", {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                });
-                setListOfSurveys(response.data);
-            } catch (error) {
-                console.error("Failed to grab surveys", error);
-                if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-                    localStorage.removeItem("token");
-                    navigate("/login");
-                }
-            }
-        };
-
-        fetchSurveys();
+      fetchSurveys();
     }, [navigate]);
 
       // If navigated from Home with a survey to take, open it
@@ -356,80 +147,65 @@ export const UserDash = () => {
         </header>
           <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {activeView === "browse" ? (
-            <Tabs defaultValue="available" className="space-y-6">
+            <Tabs defaultValue="open" className="space-y-6">
               <TabsList className="grid w-full max-w-4xl mx-auto grid-cols-3">
-                <TabsTrigger value="available">
-                  Available Surveys
-                </TabsTrigger>
-                <TabsTrigger value="closed">
-                  Past Surveys
-                </TabsTrigger>
-                <TabsTrigger value="drafts">
-                  Drafts
-                </TabsTrigger>
+                <TabsTrigger value="open">Published Surveys</TabsTrigger>
+                <TabsTrigger value="drafts">Drafts</TabsTrigger>
+                <TabsTrigger value="closed">Past Surveys</TabsTrigger>
               </TabsList>
 
-              <TabsContent
-                value="available"
-                className="space-y-6"
-              >
-                <div className="text-center max-w-2xl mx-auto">
-                  <h2 className="text-gray-900">
-                    Available Surveys
-                  </h2>
-                  <p className="text-gray-600 mt-2">
-                    Browse and participate in surveys or view
-                    their results
-                  </p>
-                </div>
-                <SurveyList
-                  surveys={surveys.filter(
-                    (s) => s.status === "published",
+              <TabsContent value="open" className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {surveys.filter(s => s.status === 'published' || s.status === 'open').length === 0 && (
+                    <div className="col-span-full text-center text-gray-500">No published surveys yet.</div>
                   )}
-                  onTakeSurvey={handleTakeSurvey}
-                  onViewResults={handleViewResults}
-                />
-              </TabsContent>
-
-              <TabsContent value="closed" className="space-y-6">
-                <div className="text-center max-w-2xl mx-auto">
-                  <h2 className="text-gray-900">Past Surveys</h2>
-                  <p className="text-gray-600 mt-2">
-                    Surveys you have created that are now closed
-                  </p>
+                  {surveys.filter(s => s.status === 'published' || s.status === 'open').map(s => (
+                    <div key={s.survey_id} className="p-4 border rounded-lg bg-white">
+                      <h3 className="text-lg font-semibold">{s.title}</h3>
+                      <p className="text-sm text-gray-500">Questions: {s.question_count}</p>
+                      <div className="mt-3 flex gap-2">
+                        <Button onClick={() => navigate(`/survey/${s.nice_url}`)}>Open</Button>
+                        <Button variant="outline" onClick={() => handleClose(s.nice_url)}>Close</Button>
+                        <Button variant="ghost" onClick={() => handleViewResults(s)}>Results</Button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <SurveyList
-                  surveys={surveys.filter(
-                    (s) =>
-                      s.status === "closed" &&
-                      s.createdBy === "me",
-                  )}
-                  onTakeSurvey={handleTakeSurvey}
-                  onViewResults={handleViewResults}
-                  isPastSurveys={true}
-                />
               </TabsContent>
-
-              {/* Create tab removed; survey creation handled on separate page */}
 
               <TabsContent value="drafts" className="space-y-6">
                 <div className="text-center max-w-2xl mx-auto">
-                  <h2 className="text-gray-900">
-                    Draft Surveys
-                  </h2>
-                  <p className="text-gray-600 mt-2">
-                    Continue working on your unfinished surveys
-                  </p>
+                  <h2 className="text-gray-900">Draft Surveys</h2>
+                  <p className="text-gray-600 mt-2">Continue working on your unfinished surveys</p>
                 </div>
-                <SurveyList
-                  surveys={drafts}
-                  onTakeSurvey={handleTakeSurvey}
-                  onViewResults={handleViewResults}
-                  isDrafts={true}
-                  onPublishDraft={handlePublishDraft}
-                  onDeleteDraft={handleDeleteDraft}
-                  onEditDraft={handleEditDraft}
-                />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {surveys.filter(s => s.status === 'draft').map(s => (
+                    <div key={s.survey_id} className="p-4 border rounded-lg bg-white">
+                      <h3 className="text-lg font-semibold">{s.title}</h3>
+                      <p className="text-sm text-gray-500">Questions: {s.question_count}</p>
+                      <div className="mt-3 flex gap-2">
+                        <Button onClick={() => navigate(`/survey/edit/${s.nice_url}`)}>Edit</Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="closed" className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {surveys.filter(s => s.status === 'closed').length === 0 && (
+                    <div className="col-span-full text-center text-gray-500">No past surveys yet.</div>
+                  )}
+                  {surveys.filter(s => s.status === 'closed').map(s => (
+                    <div key={s.survey_id} className="p-4 border rounded-lg bg-white">
+                      <h3 className="text-lg font-semibold">{s.title}</h3>
+                      <p className="text-sm text-gray-500">Questions: {s.question_count}</p>
+                      <div className="mt-3 flex gap-2">
+                        <Button onClick={() => handleViewResults(s)}>View Results</Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </TabsContent>
             </Tabs>
           ) : activeView === "take" && selectedSurvey ? (

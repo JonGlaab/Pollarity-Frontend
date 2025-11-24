@@ -10,6 +10,7 @@ import { CreateSurvey } from './pages/CreateSurvey';
 import ViewSurvey from './pages/ViewSurvey';
 
 import AdminDashboard from './pages/AdminDashboard';
+import { Toaster } from './components/ui/sonner';
 
 axios.defaults.baseURL = process.env.REACT_APP_API_URL;
 
@@ -117,6 +118,7 @@ function App() {
     <Router>
         <AuthHandler />
         <Navbar />
+        <Toaster />
       <div className="App">
         <Routes>
             <Route path="/" element={<UserRoute><Home /></UserRoute>} />
@@ -124,6 +126,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/logout" element={<Logout />} />
             <Route path="/survey/create" element={<UserRoute><CreateSurvey /></UserRoute>} />
+            <Route path="/survey/edit/:niceUrl" element={<UserRoute><CreateSurvey /></UserRoute>} />
             <Route path="/survey/:niceUrl" element={<ViewSurvey />} />
             <Route path="/userdash" element={<UserDash />} />
             <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />

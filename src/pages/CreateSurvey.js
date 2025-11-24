@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import QuestionEditor from '../components/QuestionEditor';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -21,19 +21,23 @@ const initialSurveyState = {
 
 // Initial structure for a new question
 const initialNewQuestion = {
-    question_text: 'Untitled Question',
-    question_type: 'multiple_choice',
+    question_text: '',
+    question_type: 'multiple_choice' ,
     is_required: false,
-    options: [{ option_text: 'Option 1' }], // Start with one option for MC/Checkbox
+    options: [{ option_text: '' }], // Start with one option for MC/Checkbox
     isGenerated: false // Track if manually created or AI generated
 };
 
 export const CreateSurvey = () => {
     const navigate = useNavigate();
+    const { niceUrl } = useParams();
     const [survey, setSurvey] = useState(initialSurveyState);
     const [isPreviewMode, setIsPreviewMode] = useState(false);
+    const [draggingIndex, setDraggingIndex] = useState(null);
     const [isSaving, setIsSaving] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false); // Loading state for AI
+    const [editingNiceUrl, setEditingNiceUrl] = useState(null);
+    const [modeLabel, setModeLabel] = useState('Create');
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -41,6 +45,41 @@ export const CreateSurvey = () => {
             navigate('/login');
         }
     }, [navigate]);
+
+    // Load survey when route includes a niceUrl for editing
+    useEffect(() => {
+        const loadForEdit = async () => {
+            if (!niceUrl) return;
+            try {
+                const token = localStorage.getItem('token');
+                const res = await axios.get(`/api/surveys/${niceUrl}/edit`, { headers: { Authorization: `Bearer ${token}` }, withCredentials: true });
+                const s = res.data;
+
+                const mapped = {
+                    title: s.title || '',
+                    description: s.description || '',
+                    status: s.status || 'draft',
+                    is_public: !!s.is_public,
+                    questions: (s.Questions || []).map(q => ({
+                        question_text: q.question_text,
+                        question_type: q.question_type,
+                        is_required: !!q.is_required,
+                        question_order: q.question_order || 0,
+                        options: (q.Options || []).map(o => ({ option_text: o.option_text }))
+                    }))
+                };
+
+                setSurvey(mapped);
+                setEditingNiceUrl(niceUrl);
+                setModeLabel('Edit');
+            } catch (err) {
+                console.error('Failed to load survey for edit', err);
+                alert('Failed to load survey for editing. You may not have permission.');
+                navigate('/userdash');
+            }
+        };
+        loadForEdit();
+    }, [niceUrl, navigate]);
 
     // Handler for Survey Title and Description
     const handleSurveyDetailChange = (e) => {
@@ -137,7 +176,7 @@ export const CreateSurvey = () => {
     const handleAddOption = (questionIndex) => {
         const updatedQuestions = survey.questions.map((q, index) => {
             if (index === questionIndex) {
-                const newOption = { option_text: `Option ${q.options.length + 1}` };
+                const newOption = { option_text: `` };
                 return { ...q, options: [...q.options, newOption] };
             }
             return q;
@@ -265,6 +304,26 @@ export const CreateSurvey = () => {
     const handleSave = async (status) => {
         setIsSaving(true);
 
+        // Validation: ensure required questions have answers/at least one option
+        const missingRequired = survey.questions.some((q) => {
+            if (!q.is_required) return false;
+            if (q.question_type === 'short_answer') {
+                return !q.question_text || q.question_text.trim() === '';
+            }
+            // for choice types, require at least two options and non-empty option text
+            if (['multiple_choice', 'checkbox'].includes(q.question_type)) {
+                if (!q.options || q.options.length === 0) return true;
+                return q.options.some(opt => !opt.option_text || opt.option_text.trim() === '');
+            }
+            return false;
+        });
+
+        if (missingRequired) {
+            alert('Please make sure required questions and their options are filled out before saving.');
+            setIsSaving(false);
+            return;
+        }
+
         // Ensure all questions have correct question_order and options have correct option_order
         const questionsToSave = survey.questions.map((q, index) => {
             const questionData = {
@@ -290,15 +349,20 @@ export const CreateSurvey = () => {
         };
 
         try {
-            const response = await axios.post("/api/surveys", dataToSend, {
-                withCredentials: true
-            });
-
-            alert(`Survey saved as ${status}!`);
-            navigate(`/survey/${response.data.survey_id}/edit`);
+            let response;
+            if (editingNiceUrl) {
+                const token = localStorage.getItem('token');
+                response = await axios.put(`/api/surveys/${editingNiceUrl}`, dataToSend, { headers: { Authorization: `Bearer ${token}` }, withCredentials: true });
+                alert(`Survey updated!`);
+                navigate('/userdash');
+            } else {
+                response = await axios.post("/api/surveys", dataToSend, { withCredentials: true });
+                alert(`Survey saved as ${status}!`);
+                navigate('/userdash');
+            }
 
         } catch (error) {
-            console.error("Survey creation failed:", error.response?.data || error);
+            console.error("Survey create/update failed:", error.response?.data || error);
             const errorMessage = error.response?.data?.error || error.response?.data?.details || "Failed to save survey. Check the console for details.";
             alert(errorMessage);
         } finally {
@@ -317,8 +381,40 @@ export const CreateSurvey = () => {
                 <p className="text-gray-600 mb-6">{survey.description}</p>
 
                 {survey.questions.map((q, index) => (
-                    <div key={index} className="question-display mb-4 p-4 border rounded">
-                        <p className="font-semibold">Q{index + 1}. {q.question_text} {q.is_required && <span className="text-red-500">*</span>}</p>
+                    <div
+                        key={index}
+                        className={`question-display mb-4 p-4 border rounded bg-white ${draggingIndex === index ? 'opacity-70' : ''}`}
+                        draggable
+                        onDragStart={(e) => {
+                            e.dataTransfer.setData('text/plain', String(index));
+                            setDraggingIndex(index);
+                        }}
+                        onDragEnd={() => setDraggingIndex(null)}
+                        onDragOver={(e) => e.preventDefault()}
+                        onDrop={(e) => {
+                            e.preventDefault();
+                            const src = Number(e.dataTransfer.getData('text/plain'));
+                            const dest = index;
+                            if (Number.isNaN(src)) return;
+                            if (src === dest) {
+                                setDraggingIndex(null);
+                                return;
+                            }
+
+                            const newQuestions = [...survey.questions];
+                            const [moved] = newQuestions.splice(src, 1);
+                            newQuestions.splice(dest, 0, moved);
+
+                            // Reassign question_order sequentially (1-based)
+                            const reordered = newQuestions.map((qq, i) => ({ ...qq, question_order: i + 1 }));
+                            setSurvey(prev => ({ ...prev, questions: reordered }));
+                            setDraggingIndex(null);
+                        }}
+                    >
+                        <div className="flex items-start justify-between">
+                            <p className="font-semibold">Q{index + 1}. {q.question_text} {q.is_required && <span className="text-red-500">*</span>}</p>
+                            <span className="text-sm text-gray-400">drag</span>
+                        </div>
 
                         {['multiple_choice', 'checkbox'].includes(q.question_type) && q.options.map((opt, optIndex) => (
                             <div key={optIndex} className="ml-4">
@@ -343,6 +439,10 @@ export const CreateSurvey = () => {
 
     return (
         <div className="max-w-3xl mx-auto space-y-6">
+            <div className="flex items-center justify-between">
+                <h1 className="text-2xl font-semibold">{modeLabel} Survey</h1>
+                {editingNiceUrl && <span className="text-sm text-gray-500">Editing: {editingNiceUrl}</span>}
+            </div>
             <Card className="bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200">
                 <CardHeader>
                     <CardTitle>Survey Details</CardTitle>
