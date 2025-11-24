@@ -17,47 +17,71 @@ export const UserDash = () => {
     const [surveys, setSurveys] = useState([]);
     const [selectedSurvey, setSelectedSurvey] = useState(null);
     const [activeView, setActiveView] = useState("browse");
+    const [selectedClosedId, setSelectedClosedId] = useState(null);
+    const [resultsCache, setResultsCache] = useState({});
+    const [isResultsLoading, setIsResultsLoading] = useState(false);
 
   const handleViewResults = (survey) => {
-    const fetchResults = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        toast.error('Not authenticated');
-        return;
-      }
-
-      try {
-        const res = await axios.get(`/api/surveys/${survey.survey_id}/results`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-
-        const payload = res.data;
-        // Transform server results into the shape SurveyResults expects (with data arrays)
-        const transformed = {
-          title: payload.survey.title,
-          description: payload.survey.description,
-          responses: payload.survey.total_submissions,
-          questions: payload.results.map(q => {
-            if (['multiple_choice', 'checkbox'].includes(q.question_type)) {
-              const total = q.answers.reduce((sum, a) => sum + (a.count || 0), 0) || 0;
-              const data = q.answers.map(a => ({ option: a.option_text, count: a.count || 0, percentage: total ? Math.round((a.count || 0) / total * 100) : 0 }));
-              return { question: q.question_text, type: q.question_type === 'multiple_choice' ? 'multiple-choice' : 'checkbox', data };
-            } else if (q.question_type === 'short_answer') {
-              return { question: q.question_text, type: 'text', data: q.answers || [] };
-            }
-            return { question: q.question_text, type: q.question_type, data: [] };
-          })
-        };
-
-        setSelectedSurvey(transformed);
-        setActiveView('results');
-      } catch (err) {
-        console.error('Failed to fetch results', err);
-        toast.error('Failed to load results');
-      }
+    // reuse the central fetch helper so this can still navigate to the dedicated results view
+    const fetchAndNavigate = async () => {
+      await fetchResultsForSurvey(survey);
+      setActiveView('results');
     };
+    fetchAndNavigate();
+  };
 
-    fetchResults();
+  // Fetch results and set `selectedSurvey` (used both for inline preview and full results view)
+  const fetchResultsForSurvey = async (survey) => {
+    // Check cache first
+    if (!survey) return;
+    const cached = resultsCache[survey.survey_id];
+    if (cached) {
+      setSelectedSurvey(cached);
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      toast.error('Not authenticated');
+      return;
+    }
+
+    setIsResultsLoading(true);
+    try {
+      const res = await axios.get(`/api/surveys/${survey.survey_id}/results`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const payload = res.data;
+      const transformed = {
+        title: payload.survey.title,
+        description: payload.survey.description,
+        responses: payload.survey.total_submissions,
+        questions: payload.results.map(q => {
+          if (['multiple_choice', 'checkbox'].includes(q.question_type)) {
+            const total = q.answers.reduce((sum, a) => sum + (a.count || 0), 0) || 0;
+            const data = q.answers.map(a => ({ option: a.option_text, count: a.count || 0, percentage: total ? Math.round((a.count || 0) / total * 100) : 0 }));
+            return { question: q.question_text, type: q.question_type === 'multiple_choice' ? 'multiple-choice' : 'checkbox', data };
+          } else if (q.question_type === 'short_answer') {
+            return { question: q.question_text, type: 'text', data: q.answers || [] };
+          }
+          return { question: q.question_text, type: q.question_type, data: [] };
+        })
+      };
+
+      setResultsCache(prev => ({ ...prev, [survey.survey_id]: transformed }));
+      setSelectedSurvey(transformed);
+    } catch (err) {
+      console.error('Failed to fetch results', err);
+      toast.error('Failed to load results');
+    } finally {
+      setIsResultsLoading(false);
+    }
+  };
+
+  const selectClosedSurvey = async (survey) => {
+    setSelectedClosedId(survey.survey_id);
+    await fetchResultsForSurvey(survey);
   };
 
   // Download helper: fetch export endpoint as blob and trigger browser download
@@ -288,28 +312,60 @@ export const UserDash = () => {
               </TabsContent>
 
               <TabsContent value="closed" className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {surveys.filter(s => s.status === 'closed').length === 0 && (
-                    <div className="col-span-full text-center text-gray-500">No past surveys yet.</div>
-                  )}
-                  {surveys.filter(s => s.status === 'closed').map(s => (
-                    <div key={s.survey_id} className="p-4 border rounded-lg bg-white">
-                      <h3 className="text-lg font-semibold">{s.title}</h3>
-                      <p className="text-sm text-gray-500">Questions: {s.question_count}</p>
-                      <div className="mt-3 flex gap-2">
-                        <Button onClick={() => handleViewResults(s)}>View Results</Button>
-                        <Button variant="outline" onClick={() => handleExportPrompt(s)}>Export Data</Button>
+                {/* Two-column layout: left = vertical list of closed surveys (most recent first), right = charts/results for selected */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="col-span-1">
+                    <h3 className="text-lg font-semibold mb-4">Past Surveys</h3>
+                    {surveys.filter(s => s.status === 'closed').length === 0 && (
+                      <div className="text-gray-500">No past surveys yet.</div>
+                    )}
+
+                    <div className="space-y-3">
+                      {surveys
+                        .filter(s => s.status === 'closed')
+                        .sort((a, b) => new Date(b.publishedAt || b.createdAt) - new Date(a.publishedAt || a.createdAt))
+                        .map(s => (
+                          <div
+                            key={s.survey_id}
+                            onClick={() => selectClosedSurvey(s)}
+                            role="button"
+                            className={`p-3 border rounded-lg bg-white cursor-pointer transition-shadow ${selectedClosedId === s.survey_id ? 'ring-2 ring-indigo-400 shadow-md' : 'hover:shadow-sm'}`}
+                          >
+                            <h4 className="font-semibold">{s.title}</h4>
+                            <p className="text-sm text-gray-500">{new Date(s.publishedAt || s.createdAt).toLocaleDateString()}</p>
+                            <p className="text-sm text-gray-500">Questions: {s.question_count}</p>
+                            <div className="mt-2 flex gap-2">
+                              <Button size="sm" onClick={(e) => { e.stopPropagation(); handleViewResults(s); }}>Open Full Results</Button>
+                              <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); handleExportPrompt(s); }}>Export</Button>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+
+                    {surveys.filter(s => s.status === 'closed').length > 0 && (
+                      <div className="mt-4">
+                        <Button variant="ghost" onClick={() => handleExportAllPrompt(surveys.filter(s => s.status === 'closed'))} disabled={downloadingAll}>
+                          {downloadingAll ? 'Exporting...' : 'Export All'}
+                        </Button>
                       </div>
-                    </div>
-                  ))}
-                  {/* Export All control - appears as a full-width control at the bottom of closed tab */}
-                  {surveys.filter(s => s.status === 'closed').length > 0 && (
-                    <div className="col-span-full flex justify-end">
-                      <Button variant="ghost" onClick={() => handleExportAllPrompt(surveys.filter(s => s.status === 'closed'))} disabled={downloadingAll}>
-                        {downloadingAll ? 'Exporting...' : 'Export All'}
-                      </Button>
-                    </div>
-                  )}
+                    )}
+                  </div>
+
+                  <div className="col-span-2">
+                    {isResultsLoading ? (
+                      <div className="flex items-center justify-center h-full p-8">
+                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500" />
+                      </div>
+                    ) : selectedSurvey ? (
+                      <div className="p-4 bg-white border rounded-lg">
+                        <SurveyResults survey={selectedSurvey} />
+                      </div>
+                    ) : (
+                      <div className="p-8 bg-white border rounded-lg text-center text-gray-500">
+                        Select a survey on the left to view charts and analytics.
+                      </div>
+                    )}
+                  </div>
                 </div>
               </TabsContent>
             </Tabs>
