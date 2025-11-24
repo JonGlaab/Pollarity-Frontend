@@ -33,7 +33,7 @@ export const CreateSurvey = () => {
     const [survey, setSurvey] = useState(initialSurveyState);
     const [isPreviewMode, setIsPreviewMode] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
-    const [isGenerating, setIsGenerating] = useState(false); // Loading state for AI
+    const [isGenerating, setIsGenerating] = useState(false);
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -373,6 +373,9 @@ export const CreateSurvey = () => {
 
 
                     <div className="pt-2">
+                        <h1 className="text-red-600 text-2xl font-bold border-2 border-red-600 p-2">
+                            DEBUG: CAN YOU SEE ME?
+                        </h1>
                         <Button
                             onClick={handleAutoGenerate}
                             disabled={isGenerating || !survey.title}
