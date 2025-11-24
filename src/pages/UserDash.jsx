@@ -260,6 +260,9 @@ export const UserDash = () => {
                         <Button onClick={() => navigate(`/survey/${s.nice_url}`)}>Open</Button>
                         <Button variant="outline" onClick={() => handleClose(s.nice_url)}>Close</Button>
                         <Button variant="ghost" onClick={() => handleViewResults(s)}>Results</Button>
+                        {!s.has_answers && (
+                          <Button variant="outline" onClick={() => navigate(`/survey/edit/${s.nice_url}`)}>Edit</Button>
+                        )}
                       </div>
                     </div>
                   ))}

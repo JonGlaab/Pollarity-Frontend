@@ -16,6 +16,34 @@ export default function ViewSurvey() {
       try {
         const res = await axios.get(`/api/surveys/${niceUrl}`);
         setSurvey(res.data);
+                // check for existing submission (user or anon)
+        try {
+          const token = localStorage.getItem('token');
+          if (token) {
+            const resSub = await axios.get(`/api/surveys/${niceUrl}/submission`, { headers: { Authorization: `Bearer ${token}` } });
+            if (resSub.data && resSub.data.submission) {
+              const sub = resSub.data.submission;
+              const pre = {};
+              if (Array.isArray(sub.Responses)) {
+                for (const r of sub.Responses) {
+                  if (r.selected_option_id) {
+                    const qid = r.question_id;
+                    if (!pre[qid]) pre[qid] = String(r.selected_option_id);
+                    else {
+                      if (!Array.isArray(pre[qid])) pre[qid] = [pre[qid]];
+                      pre[qid].push(String(r.selected_option_id));
+                    }
+                  } else if (r.response_text) {
+                    pre[r.question_id] = r.response_text;
+                  }
+                }
+              }
+              setAnswers(pre);
+            }
+          }
+        } catch (e) {
+          // ignore missing submission or auth errors
+        }
       } catch (err) {
         console.error('Failed to load survey', err);
       } finally {

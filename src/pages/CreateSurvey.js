@@ -36,6 +36,7 @@ export const CreateSurvey = () => {
     const [draggingIndex, setDraggingIndex] = useState(null);
     const [dropIndex, setDropIndex] = useState(null);
     const [isSaving, setIsSaving] = useState(false);
+    const [publishedInfo, setPublishedInfo] = useState({ visible: false, niceUrl: null });
     const [isGenerating, setIsGenerating] = useState(false); // Loading state for AI
     const [editingNiceUrl, setEditingNiceUrl] = useState(null);
     const [modeLabel, setModeLabel] = useState('Create');
@@ -373,14 +374,31 @@ export const CreateSurvey = () => {
             if (editingNiceUrl) {
                 const token = localStorage.getItem('token');
                 response = await axios.put(`/api/surveys/${editingNiceUrl}`, dataToSend, { headers: { Authorization: `Bearer ${token}` }, withCredentials: true });
-                alert(`Survey updated!`);
-                navigate('/userdash');
+                // If the survey was set to published, surface the nice_url prominently
+                if (status === 'published') {
+                    const nice = editingNiceUrl;
+                    setPublishedInfo({ visible: true, niceUrl: nice });
+                    // auto-dismiss after 12s
+                    setTimeout(() => setPublishedInfo({ visible: false, niceUrl: null }), 12000);
+                } else {
+                    alert(`Survey updated!`);
+                    navigate('/userdash');
+                    return;
+                }
             } else {
                 response = await axios.post("/api/surveys", dataToSend, { withCredentials: true });
-                alert(`Survey saved as ${status}!`);
-                navigate('/userdash');
+                const nice = response.data && response.data.nice_url ? response.data.nice_url : null;
+                if (status === 'published' && nice) {
+                    setPublishedInfo({ visible: true, niceUrl: nice });
+                    setTimeout(() => setPublishedInfo({ visible: false, niceUrl: null }), 12000);
+                } else {
+                    alert(`Survey saved as ${status}!`);
+                    navigate('/userdash');
+                    return;
+                }
             }
-
+            // For published flows, keep the user on the builder to show the centered message
+            // Optionally, you could navigate after dismissal. For now, do not auto-navigate.
         } catch (error) {
             console.error("Survey create/update failed:", error.response?.data || error);
             const errorMessage = error.response?.data?.error || error.response?.data?.details || "Failed to save survey. Check the console for details.";
@@ -482,6 +500,31 @@ export const CreateSurvey = () => {
 
     return (
         <div className="max-w-3xl mx-auto space-y-6">
+            {/* Centered publish overlay */}
+            {publishedInfo.visible && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+                    <div className="bg-white border shadow-lg rounded-lg p-6 max-w-lg w-full mx-4 text-center pointer-events-auto">
+                        <h2 className="text-xl font-semibold mb-2">Here is your survey</h2>
+                        <p className="text-sm text-gray-600 mb-4">Send this link to your friends to get answers:</p>
+                        <div className="flex items-center justify-center gap-2 mb-4">
+                            <code className="bg-gray-100 px-3 py-1 rounded select-all">{`https://${window.location.host}/survey/${publishedInfo.niceUrl}`}</code>
+                        </div>
+                        <div className="flex items-center justify-center gap-2">
+                            <button
+                                className="bg-indigo-600 text-white px-4 py-2 rounded"
+                                onClick={async () => {
+                                    try {
+                                        await navigator.clipboard.writeText(`https://${window.location.host}/survey/${publishedInfo.niceUrl}`);
+                                    } catch (err) {
+                                        console.error('Copy failed', err);
+                                    }
+                                }}
+                            >Copy Link</button>
+                            <button className="bg-gray-200 px-4 py-2 rounded" onClick={() => { setPublishedInfo({ visible: false, niceUrl: null }); navigate('/userdash'); }}>Done</button>
+                        </div>
+                    </div>
+                </div>
+            )}
             <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-semibold">{modeLabel} Survey</h1>
                 {editingNiceUrl && <span className="text-sm text-gray-500">Editing: {editingNiceUrl}</span>}
