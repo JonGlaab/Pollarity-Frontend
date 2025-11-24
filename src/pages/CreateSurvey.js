@@ -473,6 +473,9 @@ export const CreateSurvey = () => {
 
 
                     <div className="pt-2">
+                        <h1 className="text-red-600 text-2xl font-bold border-2 border-red-600 p-2">
+                            DEBUG: CAN YOU SEE ME?
+                        </h1>
                         <Button
                             onClick={handleAutoGenerate}
                             disabled={isGenerating || !survey.title}
