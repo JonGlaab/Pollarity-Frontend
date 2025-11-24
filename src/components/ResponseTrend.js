@@ -12,7 +12,7 @@ import {
     Filler
 } from 'chart.js';
 
-// Register Chart.js v4 components
+
 ChartJS.register(
     CategoryScale,
     LinearScale,

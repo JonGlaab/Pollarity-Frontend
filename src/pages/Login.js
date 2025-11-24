@@ -20,8 +20,12 @@ function Login() {
 
     useEffect(() => {
         const token = searchParams.get("token");
+        console.log("🔍 Login Page Loaded");
+        console.log("🔍 Full URL Search Params:", searchParams.toString());
+        console.log("🔍 Extracted Token:", token);
 
         if (token) {
+            console.log("✅ Token found! Saving and redirecting...");
             localStorage.setItem("token", token);
             axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
             window.dispatchEvent(new Event('authChange'));
@@ -29,6 +33,8 @@ function Login() {
             localStorage.setItem("role", "user");
 
             navigate("/");
+        }else {
+            console.log("❌ No token found in URL.");
         }
     }, [searchParams, navigate]);
 
