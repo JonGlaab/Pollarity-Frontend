@@ -8,6 +8,7 @@ import Home from './pages/Home';
 import UserDash from './pages/UserDash';
 import { CreateSurvey } from './pages/CreateSurvey';
 import ViewSurvey from './pages/ViewSurvey';
+import Profile from './pages/Profile';
 
 import AdminDashboard from './pages/AdminDashboard';
 import { Toaster } from './components/ui/sonner';
@@ -94,6 +95,8 @@ function Navbar() {
                   <Link to="/survey/create">Create Survey</Link>
                    {" | "}
                   <Link to="/userdash">User Dashboard</Link>
+                  {" | "}
+                  <Link to="/profile">Profile</Link>
               </>
           )}
         </div>
@@ -125,6 +128,7 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
             <Route path="/logout" element={<Logout />} />
+            <Route path="/profile" element={<UserRoute><Profile /></UserRoute>} />
             <Route path="/survey/create" element={<UserRoute><CreateSurvey /></UserRoute>} />
             <Route path="/survey/edit/:niceUrl" element={<UserRoute><CreateSurvey /></UserRoute>} />
             <Route path="/survey/:niceUrl" element={<ViewSurvey />} />
