@@ -60,6 +60,99 @@ export const UserDash = () => {
     fetchResults();
   };
 
+  // Download helper: fetch export endpoint as blob and trigger browser download
+  const downloadExport = async (surveyId, format) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      toast.error('Not authenticated');
+      return;
+    }
+
+    try {
+      const res = await axios.get(`/api/surveys/${surveyId}/export/${format}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: 'blob'
+      });
+
+      const disposition = res.headers['content-disposition'] || '';
+      let filename = `survey_${surveyId}_results.${format === 'csv' ? 'csv' : 'xlsx'}`;
+      const match = /filename="?(.*)"?/.exec(disposition);
+      if (match && match[1]) filename = match[1];
+
+      const blob = new Blob([res.data], { type: res.headers['content-type'] });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+
+      toast.success(`Downloaded ${filename}`);
+    } catch (err) {
+      console.error('Export failed', err);
+      const message = err.response?.data?.error || 'Failed to export data';
+      toast.error(message);
+    }
+  };
+
+  // Prompt user (via toast) to choose CSV or Excel
+  const handleExportPrompt = (survey) => {
+    // Use a simple custom toast with action buttons and a cancel
+    const toastId = `export-prompt-${survey.survey_id}-${Date.now()}`;
+    toast(`${survey.title} — Choose export format`, {
+      id: toastId,
+      action: (
+        <div className="flex gap-2">
+          <Button onClick={() => { downloadExport(survey.survey_id, 'csv'); toast.dismiss && toast.dismiss(toastId); }} size="sm">CSV</Button>
+          <Button onClick={() => { downloadExport(survey.survey_id, 'excel'); toast.dismiss && toast.dismiss(toastId); }} size="sm">Excel</Button>
+          <Button variant="ghost" onClick={() => { toast.dismiss && toast.dismiss(toastId); }} size="sm">Cancel</Button>
+        </div>
+      )
+    });
+  };
+
+  const [downloadingAll, setDownloadingAll] = useState(false);
+
+  const handleExportAll = async (surveysToExport, format) => {
+    setDownloadingAll(true);
+    try {
+      // Export sequentially to avoid overwhelming server/browser
+      for (const s of surveysToExport) {
+        // await each download so they're processed one at a time
+        // note: downloadExport shows its own toasts
+        // eslint-disable-next-line no-await-in-loop
+        await downloadExport(s.survey_id, format);
+      }
+      toast.success('All exports completed');
+    } catch (err) {
+      console.error('Export all failed', err);
+      toast.error('Failed to export all surveys');
+    } finally {
+      setDownloadingAll(false);
+    }
+  };
+
+  const handleExportAllPrompt = (surveysList) => {
+    if (!surveysList || surveysList.length === 0) {
+      toast.error('No closed surveys to export');
+      return;
+    }
+
+    const toastId = `export-all-prompt-${Date.now()}`;
+    toast(`Export ${surveysList.length} survey(s) — choose format`, {
+      id: toastId,
+      action: (
+        <div className="flex gap-2">
+          <Button onClick={() => { handleExportAll(surveysList, 'csv'); toast.dismiss && toast.dismiss(toastId); }} size="sm">CSV</Button>
+          <Button onClick={() => { handleExportAll(surveysList, 'excel'); toast.dismiss && toast.dismiss(toastId); }} size="sm">Excel</Button>
+          <Button variant="ghost" onClick={() => { toast.dismiss && toast.dismiss(toastId); }} size="sm">Cancel</Button>
+        </div>
+      )
+    });
+  };
+
   const handleSurveySubmit = () => {
     setActiveView("browse");
     setSelectedSurvey(null);
@@ -202,9 +295,18 @@ export const UserDash = () => {
                       <p className="text-sm text-gray-500">Questions: {s.question_count}</p>
                       <div className="mt-3 flex gap-2">
                         <Button onClick={() => handleViewResults(s)}>View Results</Button>
+                        <Button variant="outline" onClick={() => handleExportPrompt(s)}>Export Data</Button>
                       </div>
                     </div>
                   ))}
+                  {/* Export All control - appears as a full-width control at the bottom of closed tab */}
+                  {surveys.filter(s => s.status === 'closed').length > 0 && (
+                    <div className="col-span-full flex justify-end">
+                      <Button variant="ghost" onClick={() => handleExportAllPrompt(surveys.filter(s => s.status === 'closed'))} disabled={downloadingAll}>
+                        {downloadingAll ? 'Exporting...' : 'Export All'}
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </TabsContent>
             </Tabs>

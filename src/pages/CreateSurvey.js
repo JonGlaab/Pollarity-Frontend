@@ -34,6 +34,7 @@ export const CreateSurvey = () => {
     const [survey, setSurvey] = useState(initialSurveyState);
     const [isPreviewMode, setIsPreviewMode] = useState(false);
     const [draggingIndex, setDraggingIndex] = useState(null);
+    const [dropIndex, setDropIndex] = useState(null);
     const [isSaving, setIsSaving] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false); // Loading state for AI
     const [editingNiceUrl, setEditingNiceUrl] = useState(null);
@@ -80,6 +81,25 @@ export const CreateSurvey = () => {
         };
         loadForEdit();
     }, [niceUrl, navigate]);
+
+    // Save ordering to server (lightweight save) when leaving preview
+    const saveOrderToServer = async () => {
+        if (!editingNiceUrl) return; // nothing to persist yet for new surveys
+        try {
+            const token = localStorage.getItem('token');
+            const questionsToSave = survey.questions.map((q, i) => {
+                const qq = { ...q, question_order: i + 1 };
+                if (qq.options && qq.options.length) {
+                    qq.options = qq.options.map((opt, oi) => ({ ...opt, option_order: oi + 1 }));
+                }
+                return qq;
+            });
+
+            await axios.put(`/api/surveys/${editingNiceUrl}`, { ...survey, questions: questionsToSave }, { headers: { Authorization: `Bearer ${token}` }, withCredentials: true });
+        } catch (err) {
+            console.error('Failed to persist question order on exit preview', err?.response?.data || err);
+        }
+    };
 
     // Handler for Survey Title and Description
     const handleSurveyDetailChange = (e) => {
@@ -374,64 +394,87 @@ export const CreateSurvey = () => {
 
         return (
             <div className="survey-preview-page p-8">
-                <button className="bg-gray-200 p-2 rounded" onClick={() => setIsPreviewMode(false)}>
+                <button className="bg-gray-200 p-2 rounded" onClick={async () => { await saveOrderToServer(); setIsPreviewMode(false); }}>
                     &larr; Back to Builder
                 </button>
                 <h1 className="text-3xl mt-4">{survey.title || "Untitled Survey"}</h1>
                 <p className="text-gray-600 mb-6">{survey.description}</p>
 
                 {survey.questions.map((q, index) => (
-                    <div
-                        key={index}
-                        className={`question-display mb-4 p-4 border rounded bg-white ${draggingIndex === index ? 'opacity-70' : ''}`}
-                        draggable
-                        onDragStart={(e) => {
-                            e.dataTransfer.setData('text/plain', String(index));
-                            setDraggingIndex(index);
-                        }}
-                        onDragEnd={() => setDraggingIndex(null)}
-                        onDragOver={(e) => e.preventDefault()}
-                        onDrop={(e) => {
-                            e.preventDefault();
-                            const src = Number(e.dataTransfer.getData('text/plain'));
-                            const dest = index;
-                            if (Number.isNaN(src)) return;
-                            if (src === dest) {
-                                setDraggingIndex(null);
-                                return;
-                            }
-
-                            const newQuestions = [...survey.questions];
-                            const [moved] = newQuestions.splice(src, 1);
-                            newQuestions.splice(dest, 0, moved);
-
-                            // Reassign question_order sequentially (1-based)
-                            const reordered = newQuestions.map((qq, i) => ({ ...qq, question_order: i + 1 }));
-                            setSurvey(prev => ({ ...prev, questions: reordered }));
-                            setDraggingIndex(null);
-                        }}
-                    >
-                        <div className="flex items-start justify-between">
-                            <p className="font-semibold">Q{index + 1}. {q.question_text} {q.is_required && <span className="text-red-500">*</span>}</p>
-                            <span className="text-sm text-gray-400">drag</span>
-                        </div>
-
-                        {['multiple_choice', 'checkbox'].includes(q.question_type) && q.options.map((opt, optIndex) => (
-                            <div key={optIndex} className="ml-4">
-                                <input
-                                    type={q.question_type === 'multiple_choice' ? 'radio' : 'checkbox'}
-                                    disabled
-                                    name={`q-${index}`}
-                                    className="mr-2"
-                                />
-                                {opt.option_text}
-                            </div>
-                        ))}
-                        {q.question_type === 'short_answer' && (
-                            <textarea disabled placeholder="Short answer text box" rows="3" className="w-full border p-2 mt-2"></textarea>
+                    <React.Fragment key={`frag-${index}`}>
+                        {dropIndex === index && (
+                            <div key={`insert-${index}`} className="h-1 bg-indigo-500 my-1 rounded transition-all" />
                         )}
-                    </div>
+
+                        <div
+                            key={index}
+                            className={`question-display mb-4 p-4 border rounded bg-white ${draggingIndex === index ? 'opacity-80 ring-2 ring-indigo-300 shadow-lg' : ''}`}
+                            draggable
+                            onDragStart={(e) => {
+                                e.dataTransfer.setData('text/plain', String(index));
+                                setDraggingIndex(index);
+                            }}
+                            onDragEnd={() => { setDraggingIndex(null); setDropIndex(null); }}
+                            onDragOver={(e) => {
+                                e.preventDefault();
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                const offset = e.clientY - rect.top;
+                                const before = offset < rect.height / 2;
+                                setDropIndex(before ? index : index + 1);
+                            }}
+                            onDragLeave={() => setDropIndex(null)}
+                            onDrop={(e) => {
+                                e.preventDefault();
+                                const src = Number(e.dataTransfer.getData('text/plain'));
+                                const dest = dropIndex !== null ? dropIndex : index;
+                                if (Number.isNaN(src)) return;
+                                if (src === dest || src + 1 === dest) {
+                                    // no-op if dropped to same position
+                                    setDraggingIndex(null);
+                                    setDropIndex(null);
+                                    return;
+                                }
+
+                                const newQuestions = [...survey.questions];
+                                const [moved] = newQuestions.splice(src, 1);
+                                // If removing an earlier item and inserting after, adjust destination
+                                const adjustedDest = src < dest ? dest - 1 : dest;
+                                newQuestions.splice(adjustedDest, 0, moved);
+
+                                // Reassign question_order sequentially (1-based)
+                                const reordered = newQuestions.map((qq, i) => ({ ...qq, question_order: i + 1 }));
+                                setSurvey(prev => ({ ...prev, questions: reordered }));
+                                setDraggingIndex(null);
+                                setDropIndex(null);
+                            }}
+                        >
+                            <div className="flex items-start justify-between">
+                                <p className="font-semibold">Q{index + 1}. {q.question_text} {q.is_required && <span className="text-red-500">*</span>}</p>
+                                <span className="text-sm text-gray-400">drag</span>
+                            </div>
+
+                            {['multiple_choice', 'checkbox'].includes(q.question_type) && q.options.map((opt, optIndex) => (
+                                <div key={optIndex} className="ml-4">
+                                    <input
+                                        type={q.question_type === 'multiple_choice' ? 'radio' : 'checkbox'}
+                                        disabled
+                                        name={`q-${index}`}
+                                        className="mr-2"
+                                    />
+                                    {opt.option_text}
+                                </div>
+                            ))}
+                            {q.question_type === 'short_answer' && (
+                                <textarea disabled placeholder="Short answer text box" rows="3" className="w-full border p-2 mt-2"></textarea>
+                            )}
+                        </div>
+                    </React.Fragment>
                 ))}
+
+                {/* insertion indicator at end */}
+                {dropIndex === survey.questions.length && (
+                    <div className="h-1 bg-indigo-500 my-1 rounded transition-all" />
+                )}
             </div>
         );
     }
