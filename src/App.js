@@ -9,6 +9,7 @@ import UserDash from './pages/UserDash';
 import { CreateSurvey } from './pages/CreateSurvey';
 import ViewSurvey from './pages/ViewSurvey';
 import Profile from './pages/Profile';
+import Navbar from "./components/Navbar";
 
 import AdminDashboard from './pages/AdminDashboard';
 import { Toaster } from './components/ui/sonner';
@@ -66,54 +67,7 @@ const UserRoute = ({ children }) => {
     return children;
 };
 
-function Navbar() {
-  const [isAuthenticated, setIsAuthenticated] = useState(
-      typeof window !== 'undefined' && !!localStorage.getItem('token')
-  );
 
-  useEffect(() => {
-    const handleAuthChange = () => {
-      setIsAuthenticated(!!localStorage.getItem('token'));
-    };
-
-    window.addEventListener('storage', handleAuthChange);
-    window.addEventListener('authChange', handleAuthChange);
-
-    return () => {
-      window.removeEventListener('storage', handleAuthChange);
-      window.removeEventListener('authChange', handleAuthChange);
-    };
-  }, []);
-
-  return (
-    <nav className="mainNav">
-        <div className="navLeft">
-          <Link to="/">Home</Link>
-          {isAuthenticated && (
-              <>
-                  {" | "}
-                  <Link to="/survey/create">Create Survey</Link>
-                   {" | "}
-                  <Link to="/userdash">User Dashboard</Link>
-                  {" | "}
-                  <Link to="/profile">Profile</Link>
-              </>
-          )}
-        </div>
-        <div className="navRight">
-          {!isAuthenticated && (
-              <>
-                <Link to="/login">Login</Link> {" | "}
-                <Link to="/register">Register</Link>
-              </>
-          )}
-          {isAuthenticated && (
-              <Link to="/logout">Logout</Link>
-          )}
-        </div>
-    </nav>
-  );
-}
 
 function App() {
 
@@ -132,7 +86,7 @@ function App() {
             <Route path="/survey/create" element={<UserRoute><CreateSurvey /></UserRoute>} />
             <Route path="/survey/edit/:niceUrl" element={<UserRoute><CreateSurvey /></UserRoute>} />
             <Route path="/survey/:niceUrl" element={<ViewSurvey />} />
-            <Route path="/userdash" element={<UserDash />} />
+            <Route path="/userdash" element={<UserRoute><UserDash /></UserRoute> } />
             <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
         </Routes>
       </div>

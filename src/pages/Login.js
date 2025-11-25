@@ -1,9 +1,8 @@
-import React, {useEffect} from 'react';
+import React, { useEffect } from 'react';
 import axios from 'axios';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { useNavigate, useSearchParams } from "react-router-dom";
-
 
 const GoogleIcon = () => (
     <svg className="w-5 h-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -14,91 +13,83 @@ const GoogleIcon = () => (
     </svg>
 );
 
+
+const parseJwt = (token) => {
+    try {
+        return JSON.parse(atob(token.split('.')[1]));
+    } catch (e) {
+        return null;
+    }
+};
+
 function Login() {
     let navigate = useNavigate();
     const [searchParams] = useSearchParams();
 
     useEffect(() => {
         const token = searchParams.get("token");
-        console.log("🔍 Login Page Loaded");
-        console.log("🔍 Full URL Search Params:", searchParams.toString());
-        console.log("🔍 Extracted Token:", token);
 
         if (token) {
-            console.log("✅ Token found! Saving and redirecting...");
             localStorage.setItem("token", token);
+
+
+            const decoded = parseJwt(token);
+            if (decoded) {
+                localStorage.setItem("role", decoded.role || "user");
+                localStorage.setItem("user_name", decoded.first_name || "User");
+                localStorage.setItem("user_photo", decoded.user_photo_url || "");
+            } else {
+                localStorage.setItem("role", "user");
+            }
+            // -------------------------------------------------
+
             axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
             window.dispatchEvent(new Event('authChange'));
-
-            localStorage.setItem("role", "user");
-
-            navigate("/");
-        }else {
-            console.log("❌ No token found in URL.");
+            navigate("/", { replace: true });
         }
     }, [searchParams, navigate]);
 
-    const initialValues = {
-        email: "",
-        password: ""
-    };
+    const initialValues = { email: "", password: "" };
 
     const validationSchema = Yup.object().shape({
         email: Yup.string().email("Invalid email").required("Email is required"),
         password: Yup.string().required("Password is required")
     });
 
-    // const onSubmit = async (data, { setSubmitting }) => {
-    //     try {
-    //         const response = await axios.post("/api/auth/login", data);
-    //
-    //         if (response.data.token) {
-    //             localStorage.setItem("token", response.data.token);
-    //             axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
-    //             window.dispatchEvent(new Event('authChange'));
-    //             navigate("/");
-    //         }
-    //     } catch (error) {
-    //         console.error("Login error:", error);
-    //         const message = error.response?.data?.message || "Login failed. Please check your credentials.";
-    //         alert(message);
-    //     } finally {
-    //         setSubmitting(false);
-    //     }
-    // };
-
     const onSubmit = async (data, { setSubmitting }) => {
         try {
             const response = await axios.post("/api/auth/login", data);
-
-            const token = response.data?.token;
-            const user= response.data?.user;
+            const { token, user } = response.data;
 
             if (token) {
                 localStorage.setItem("token", token);
                 localStorage.setItem("role", user?.role || 'user');
+
+                if (user) {
+                    localStorage.setItem("user_name", user.first_name || "User");
+                    localStorage.setItem("user_photo", user.user_photo_url || "");
+                }
+
                 axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
                 window.dispatchEvent(new Event('authChange'));
+
                 if (user?.role === 'admin') {
                     navigate("/admin");
                 } else {
                     navigate("/");
                 }
-            } else {
-                console.error("Login failed: Server returned 200 OK but no token.");
-                alert("Login failed due to unexpected server response.");
             }
         } catch (error) {
             console.error("Login error:", error);
-            const message = error.response?.data?.message || "Login failed. Please check your credentials.";
-            alert(message);
+            alert(error.response?.data?.message || "Login failed.");
         } finally {
             setSubmitting(false);
         }
     };
 
     const handleGoogleLogin = () => {
-        window.location.href = `${axios.defaults.baseURL}/api/auth/google`;
+        const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5001';
+        window.location.href = `${baseUrl}/api/auth/google`;
     };
 
     return (
@@ -106,9 +97,7 @@ function Login() {
             <div className='max-w-md w-full space-y-8 bg-background-paper p-10 rounded-xl shadow-lg'>
                 <div className="text-center">
                     <h2 className="mt-2 text-3xl font-extrabold text-text-main">Welcome Back</h2>
-                    <p className="mt-2 text-sm text-text-muted">
-                        Sign in to continue to Pollarity
-                    </p>
+                    <p className="mt-2 text-sm text-text-muted">Sign in to continue to Pollarity</p>
                 </div>
 
                 <Formik initialValues={initialValues} onSubmit={onSubmit} validationSchema={validationSchema}>
@@ -117,34 +106,19 @@ function Login() {
                             <div className="space-y-4">
                                 <div>
                                     <label className="block text-sm font-medium text-text-muted mb-1">Email</label>
-                                    <Field
-                                        name="email"
-                                        className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-secondary bg-surface text-text-main"
-                                        placeholder="you@example.com"
-                                    />
+                                    <Field name="email" className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-secondary bg-surface text-text-main" placeholder="you@example.com"/>
                                     <ErrorMessage name="email" component="span" className='text-status-error text-xs mt-1' />
                                 </div>
-
                                 <div>
                                     <label className="block text-sm font-medium text-text-muted mb-1">Password</label>
-                                    <Field
-                                        type="password"
-                                        name="password"
-                                        className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-secondary bg-surface text-text-main"
-                                        placeholder="••••••••"
-                                    />
+                                    <Field type="password" name="password" className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-secondary bg-surface text-text-main" placeholder="••••••••"/>
                                     <ErrorMessage name="password" component="span" className='text-status-error text-xs mt-1' />
                                 </div>
                             </div>
 
-                            <button
-                                type="submit"
-                                disabled={isSubmitting}
-                                className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-primary-content bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary transition-colors disabled:opacity-50"
-                            >
+                            <button type="submit" disabled={isSubmitting} className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-primary-content bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary transition-colors disabled:opacity-50">
                                 {isSubmitting ? "Signing in..." : "Sign In"}
                             </button>
-
 
                             <div className="relative flex items-center justify-center py-2">
                                 <div className="flex-grow border-t border-gray-300"></div>
@@ -152,22 +126,14 @@ function Login() {
                                 <div className="flex-grow border-t border-gray-300"></div>
                             </div>
 
-
-                            <button
-                                type="button"
-                                onClick={handleGoogleLogin}
-                                className="w-full flex items-center justify-center gap-3 py-2 px-4 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary transition-all"
-                            >
+                            <button type="button" onClick={handleGoogleLogin} className="w-full flex items-center justify-center gap-3 py-2 px-4 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary transition-all">
                                 <GoogleIcon />
                                 Sign in with Google
                             </button>
 
                             <p className="mt-4 text-center text-sm text-text-muted">
                                 Don't have an account?{' '}
-                                <span
-                                    onClick={() => navigate('/register')}
-                                    className="font-medium text-secondary hover:text-primary cursor-pointer hover:underline"
-                                >
+                                <span onClick={() => navigate('/register')} className="font-medium text-secondary hover:text-primary cursor-pointer hover:underline">
                                     Sign up
                                 </span>
                             </p>
