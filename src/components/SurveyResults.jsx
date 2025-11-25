@@ -156,6 +156,26 @@ export function SurveyResults({ survey }) {
                   </div>
                 ))}
                 <p className="text-[#415a77]">+ {Math.max(0, totalResponses - (result.data.length || 0))} more responses</p>
+
+                {/* Word map (tag cloud) */}
+                {result.word_map && result.word_map.length > 0 && (
+                  <div className="mt-4">
+                    <div className="text-sm text-[#415a77] mb-2">Word map</div>
+                    <div className="flex flex-wrap gap-2">
+                      {(() => {
+                        const max = Math.max(...result.word_map.map(w => w.count), 1);
+                        return result.word_map.map((w, idx) => {
+                          const size = 0.9 + (w.count / max) * 1.6; // scale font-size
+                          return (
+                            <span key={`wm-${idx}`} className="inline-block bg-gray-100 px-2 py-1 rounded text-[#0d1b2a]" style={{ fontSize: `${12 * size}px` }}>
+                              {w.word} <span className="text-xs text-gray-500">{w.count}</span>
+                            </span>
+                          );
+                        });
+                      })()}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </CardContent>
