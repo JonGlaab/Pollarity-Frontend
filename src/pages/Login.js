@@ -32,14 +32,15 @@ function Login() {
         if (token) {
             localStorage.setItem("token", token);
 
-
             const decoded = parseJwt(token);
             if (decoded) {
                 localStorage.setItem("role", decoded.role || "user");
-                localStorage.setItem("user_name", decoded.first_name || "User");
+                const firstName = decoded.first_name || decoded.firstName || decoded.given_name || decoded.name || "User";
+                localStorage.setItem("user_name", firstName);
                 localStorage.setItem("user_photo", decoded.user_photo_url || "");
             } else {
                 localStorage.setItem("role", "user");
+                localStorage.setItem("user_name", "User");
             }
             // -------------------------------------------------
 
@@ -66,7 +67,9 @@ function Login() {
                 localStorage.setItem("role", user?.role || 'user');
 
                 if (user) {
-                    localStorage.setItem("user_name", user.first_name || "User");
+                    // Check multiple fields for the first name here as well
+                    const firstName = user.first_name || user.firstName || user.given_name || user.name || "User";
+                    localStorage.setItem("user_name", firstName);
                     localStorage.setItem("user_photo", user.user_photo_url || "");
                 }
 

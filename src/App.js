@@ -76,7 +76,7 @@ function App() {
         <AuthHandler />
         <Navbar />
         <Toaster />
-      <div className="App">
+      <div className="App pt-20">
         <Routes>
             <Route path="/" element={<UserRoute><Home /></UserRoute>} />
             <Route path="/register" element={<Register />} />

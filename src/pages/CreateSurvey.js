@@ -308,8 +308,8 @@ export const CreateSurvey = () => {
             }));
             setIsDirty(true);
         } catch (err) {
-            console.error("AI Error", err);
-            alert("Failed to generate questions. Try again.");
+            const serverMessage = err.response?.data?.message || err.response?.data?.error || err.message;
+            alert(`AI Generation Failed: ${serverMessage}`);
         } finally {
             setIsGenerating(false);
         }
