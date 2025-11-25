@@ -35,28 +35,33 @@ export const Home = () => {
                          <div className="min-h-screen bg-[#e0e1dd]">
                 <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {listOfSurveys.map((s) => (
-                            <div key={s.survey_id} className="bg-white rounded-lg shadow p-4">
-                                <h3 className="text-xl font-semibold">{s.title}</h3>
+                        {listOfSurveys.map((s) => {
+                            const obj = s && s.dataValues ? s.dataValues : s || {};
+                            const count = obj.question_count ?? obj.questionCount ?? (obj.Questions ? obj.Questions.length : (obj.questions ? obj.questions.length : 0));
+                            const author = obj.author ?? (obj.User ? `${obj.User.first_name || ''} ${obj.User.last_name || ''}`.trim() : 'Unknown');
+                            return (
+                                <div key={obj.survey_id || obj.id} className="bg-white rounded-lg shadow p-4">
+                                    <h3 className="text-xl font-semibold">{obj.title}</h3>
 
-                                <p className="text-sm text-gray-500">By {s.User?.first_name}</p>
-                                <p className="text-xs text-gray-400">{new Date(s.createdAt).toLocaleDateString()}</p>
-                                <div className="mt-4 flex justify-between items-center">
-                                    <span className="text-gray-600 text-sm">{s.questions ? s.questions.length : 0} question{s.questions && s.questions.length !== 1 ? 's' : ''}</span>
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => navigate(`/survey/${s.nice_url}`) }
-                                            className="bg-blue-600 text-white px-3 py-1 rounded"
-                                        >
-                                            Answer
-                                        </button>
-                                        {!localStorage.getItem('token') && (
-                                            <button onClick={() => navigate('/login')} className="bg-green-600 text-white px-3 py-1 rounded">Login</button>
-                                        )}
+                                    <p className="text-sm text-gray-500">By {author}</p>
+                                    <p className="text-xs text-gray-400">{obj.createdAt ? new Date(obj.createdAt).toLocaleDateString() : ''}</p>
+                                    <div className="mt-4 flex justify-between items-center">
+                                        <span className="text-gray-600 text-sm">{`${count} question${count !== 1 ? 's' : ''}`}</span>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => navigate(`/survey/${obj.nice_url}`) }
+                                                className="bg-blue-600 text-white px-3 py-1 rounded"
+                                            >
+                                                Answer
+                                            </button>
+                                            {!localStorage.getItem('token') && (
+                                                <button onClick={() => navigate('/login')} className="bg-green-600 text-white px-3 py-1 rounded">Login</button>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
             </main>
         
