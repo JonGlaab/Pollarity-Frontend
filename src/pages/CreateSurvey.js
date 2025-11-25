@@ -27,7 +27,7 @@ const initialSurveyState = {
     description: '',
     status: 'draft',
     is_public: false,
-    questions: [], // Array to hold all question objects
+    questions: [],
 };
 
 // Initial structure for a new question
@@ -52,9 +52,14 @@ const NavigationHandler = ({ onNavigate }) => {
             }
         };
 
-        document.querySelector('.mainNav').addEventListener('click', handleClick);
+        const navElement = document.querySelector('.mainNav'); // Ensure this class exists on your Navbar
+        if (navElement) {
+            navElement.addEventListener('click', handleClick);
+        }
         return () => {
-            document.querySelector('.mainNav').removeEventListener('click', handleClick);
+            if (navElement) {
+                navElement.removeEventListener('click', handleClick);
+            }
         };
     }, [location, navigate, onNavigate]);
 
@@ -83,6 +88,23 @@ export const CreateSurvey = () => {
             navigate('/login');
         }
     }, [navigate]);
+
+    // --- NEW: LISTEN FOR NAVBAR ADD QUESTION EVENTS ---
+    useEffect(() => {
+        const handleNavbarAdd = (event) => {
+            if (event.detail && event.detail.type) {
+                handleAddQuestion(event.detail.type);
+                // Smooth scroll to bottom to see the new question
+                setTimeout(() => {
+                    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+                }, 100);
+            }
+        };
+
+        window.addEventListener('add-question-event', handleNavbarAdd);
+        return () => window.removeEventListener('add-question-event', handleNavbarAdd);
+    }, [survey.questions]);
+    // -------------------------------------------------
 
     useEffect(() => {
         const loadForEdit = async () => {
@@ -152,7 +174,6 @@ export const CreateSurvey = () => {
         }));
     };
 
-    // Handler to Add a New Question
     const handleAddQuestion = (type = 'multiple_choice') => {
         setIsDirty(true);
         const newQuestion = {
@@ -167,12 +188,10 @@ export const CreateSurvey = () => {
         }));
     };
 
-    // Handler for changes within a specific question (text, type, required status)
     const handleQuestionChange = (questionIndex, field, value) => {
         setIsDirty(true);
         const updatedQuestions = survey.questions.map((q, index) => {
             if (index === questionIndex) {
-                // If the type changes, reset options if necessary
                 if (field === 'question_type' && (value === 'short_answer')) {
                     return { ...q, [field]: value, options: [] };
                 }
@@ -184,7 +203,6 @@ export const CreateSurvey = () => {
         setSurvey(prev => ({ ...prev, questions: updatedQuestions }));
     };
 
-    // Handler to remove a question
     const handleRemoveQuestion = (questionIndex) => {
         setIsDirty(true);
         const updatedQuestions = survey.questions
@@ -264,7 +282,7 @@ export const CreateSurvey = () => {
         setSurvey(prev => ({ ...prev, questions: updatedQuestions }));
     };
 
-    // ... (Keep AI Handlers: handleAutoGenerate, Refine, Accept, Discard) ...
+    // AI HANDLERS
     const handleAutoGenerate = async () => {
         if (!survey.title) return alert("Please enter a title first!");
 
@@ -417,14 +435,12 @@ export const CreateSurvey = () => {
 
     const handleNavigate = (path) => {
         if (!handleBlockedNavigation({ pathname: path })) {
-            // Navigation is blocked, the dialog will be shown
         } else {
             navigate(path);
         }
     };
 
     if (isPreviewMode) {
-
         return (
             <div className="survey-preview-page p-8">
                 <button className="bg-gray-200 p-2 rounded" onClick={async () => { await saveOrderToServer(); setIsPreviewMode(false); }}>
@@ -485,7 +501,7 @@ export const CreateSurvey = () => {
     }
 
     return (
-        <div className="max-w-3xl mx-auto space-y-6">
+        <div className="max-w-3xl mx-auto space-y-6 pb-20">
             <NavigationHandler onNavigate={handleNavigate} />
             <AlertDialog open={showConfirmation} onOpenChange={cancelNavigation}>
                 <AlertDialogContent>
@@ -524,7 +540,7 @@ export const CreateSurvey = () => {
             <Card className="bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200">
                 <CardHeader>
                     <CardTitle>Survey Details</CardTitle>
-                    <CardDescription>Create or edit your survey. Add questions and manage options.</CardDescription>
+                    <CardDescription>Create or edit your survey. Add questions via the Navigation Bar.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="space-y-2">
@@ -535,7 +551,6 @@ export const CreateSurvey = () => {
                         <Label htmlFor="description">Survey Description</Label>
                         <Textarea id="description" name="description" placeholder="What is the purpose of this survey" value={survey.description} onChange={handleSurveyDetailChange} rows={4} />
                     </div>
-
 
                     <div className="pt-2">
                         <Button onClick={handleAutoGenerate} disabled={isGenerating || !survey.title} type="button" className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white border-none shadow-md hover:shadow-lg transition-all">
@@ -548,11 +563,9 @@ export const CreateSurvey = () => {
                     </div>
                 </CardContent>
             </Card>
-            <div className="flex space-x-2">
-                <Button onClick={() => handleAddQuestion('multiple_choice')}>+ Multiple Choice</Button>
-                <Button onClick={() => handleAddQuestion('checkbox')}>+ Checkbox</Button>
-                <Button onClick={() => handleAddQuestion('short_answer')}>+ Short Answer</Button>
-            </div>
+
+
+
             <div className="space-y-3">
                 {survey.questions.map((q, index) => (
                     <QuestionEditor
