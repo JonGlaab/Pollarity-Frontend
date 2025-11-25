@@ -10,6 +10,7 @@ import { SurveyForm } from '../components/SurveyForm';
 import ResponseTrend from '../components/ResponseTrend';
 import { SurveyExportMenu } from '../components/SurveyExportMenu';
 import { SurveyResults } from '../components/SurveyResults';
+import QuestionChart from '../components/QuestionChart';
 
 import { Button } from '../components/ui/button';
 
@@ -335,6 +336,15 @@ export const UserDash = () => {
                     ) : selectedSurvey ? (
                       <div className="space-y-6">
                         <ResponseTrend dates={selectedSurvey.submission_dates} />
+                        
+
+                          {selectedSurvey.questions?.map((q, i) => (
+                            <div key={i} className="p-4 bg-white border rounded-lg">
+                              <h4 className="font-semibold mb-2">{q.question_text}</h4>
+                              <QuestionChart question={q} />
+                            </div>
+                          ))}
+                        
                         <div className="p-4 bg-white border rounded-lg">
                           <SurveyResults survey={selectedSurvey} />
                         </div>
