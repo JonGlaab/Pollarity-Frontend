@@ -1,6 +1,5 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger,} from "../components/ui/tabs";
-import { ClipboardList } from "lucide-react";
 
 import axios from 'axios';
 import { useEffect, useState } from 'react';
@@ -251,19 +250,6 @@ export const UserDash = () => {
   <>
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
         <header className="bg-white border-b shadow-sm">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div className="flex items-center gap-3">
-              <div className="bg-gradient-to-br from-blue-600 to-purple-600 p-3 rounded-xl">
-                <ClipboardList className="size-8 text-white" />
-              </div>
-              <div>
-                <h1 className="text-blue-900">Survey Hub</h1>
-                <p className="text-gray-600">
-                  Create, share, and analyze surveys
-                </p>
-              </div>
-            </div>
-          </div>
         </header>
           <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {activeView === "browse" ? (
