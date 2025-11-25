@@ -11,7 +11,7 @@ import {
 } from "./ui/dropdown-menu";
 import { Download, FileSpreadsheet, FileText, Loader2 } from "lucide-react";
 
-export const SurveyExportMenu = ({ surveyId, surveyTitle }) => {
+export const SurveyExportMenu = ({ surveyId, surveyTitle, buttonSize = "default" }) => {
     const [isDownloading, setIsDownloading] = useState(false);
 
     const handleDownload = async (format) => {
@@ -53,7 +53,7 @@ export const SurveyExportMenu = ({ surveyId, surveyTitle }) => {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="outline" disabled={isDownloading} className="gap-2">
+                <Button variant="outline" size={buttonSize} disabled={isDownloading} className="gap-2">
                     {isDownloading ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (

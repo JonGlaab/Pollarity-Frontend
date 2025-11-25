@@ -64,6 +64,9 @@ const ResponseTrend = ({ dates }) => {
             }]
         };
     }, [dates, timeFrame]);
+        
+    console.log('dates prop:', dates);
+
 
     if (!dates || dates.length === 0) {
         return <div className="text-center text-gray-400 py-10 text-sm">No data available</div>;

@@ -3,10 +3,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger,} from "../components/ui/tabs"
 
 import axios from 'axios';
 import { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { SurveyForm } from '../components/SurveyForm';
+import ResponseTrend from '../components/ResponseTrend';
+import { SurveyExportMenu } from '../components/SurveyExportMenu';
 import { SurveyResults } from '../components/SurveyResults';
 
 import { Button } from '../components/ui/button';
@@ -29,9 +31,13 @@ export const UserDash = () => {
     fetchAndNavigate();
   };
 
+  const publishedSurveys = surveys.filter(s => s.status === 'published' || s.status === 'open');
+  const draftSurveys = surveys.filter(s => s.status === 'draft');
+  const closedSurveys = surveys.filter(s => s.status === 'closed');
+
+
   // Fetch results and set `selectedSurvey` (used both for inline preview and full results view)
   const fetchResultsForSurvey = async (survey) => {
-    // Check cache first
     if (!survey) return;
     const cached = resultsCache[survey.survey_id];
     if (cached) {
@@ -59,6 +65,7 @@ export const UserDash = () => {
         unique_respondents: payload.kpis ? parseInt(payload.kpis.unique_respondents || 0, 10) : 0,
         first_response_at: payload.kpis ? payload.kpis.first_response_at : null,
         last_response_at: payload.kpis ? payload.kpis.last_response_at : null,
+        submission_dates: payload.submission_dates || [],
         questions: (payload.questions || []).map(q => {
           if (['multiple_choice', 'checkbox'].includes(q.question_type)) {
             const data = (q.options || []).map(o => ({ option_id: o.option_id, option: o.option_text, count: o.count || 0, percentage: o.percentage || 0 }));
@@ -123,22 +130,6 @@ export const UserDash = () => {
     }
   };
 
-  // Prompt user (via toast) to choose CSV or Excel
-  const handleExportPrompt = (survey) => {
-    // Use a simple custom toast with action buttons and a cancel
-    const toastId = `export-prompt-${survey.survey_id}-${Date.now()}`;
-    toast(`${survey.title} — Choose export format`, {
-      id: toastId,
-      action: (
-        <div className="flex gap-2">
-          <Button onClick={() => { downloadExport(survey.survey_id, 'csv'); toast.dismiss && toast.dismiss(toastId); }} size="sm">CSV</Button>
-          <Button onClick={() => { downloadExport(survey.survey_id, 'excel'); toast.dismiss && toast.dismiss(toastId); }} size="sm">Excel</Button>
-          <Button variant="ghost" onClick={() => { toast.dismiss && toast.dismiss(toastId); }} size="sm">Cancel</Button>
-        </div>
-      )
-    });
-  };
-
   const [downloadingAll, setDownloadingAll] = useState(false);
 
   const handleExportAll = async (surveysToExport, format) => {
@@ -148,7 +139,6 @@ export const UserDash = () => {
       for (const s of surveysToExport) {
         // await each download so they're processed one at a time
         // note: downloadExport shows its own toasts
-        // eslint-disable-next-line no-await-in-loop
         await downloadExport(s.survey_id, format);
       }
       toast.success('All exports completed');
@@ -210,7 +200,6 @@ export const UserDash = () => {
   };
 
     const navigate = useNavigate();
-    const location = useLocation();
 
     useEffect(() => {
       const fetchSurveys = async () => {
@@ -238,14 +227,6 @@ export const UserDash = () => {
       fetchSurveys();
     }, [navigate]);
 
-      // If navigated from Home with a survey to take, open it
-      useEffect(() => {
-        if (location && location.state && location.state.survey) {
-          setSelectedSurvey(location.state.survey);
-          setActiveView('take');
-        }
-      }, [location]);
-
  return (
   <>
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
@@ -262,10 +243,10 @@ export const UserDash = () => {
 
               <TabsContent value="open" className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {surveys.filter(s => s.status === 'published' || s.status === 'open').length === 0 && (
+                  {publishedSurveys.length === 0 && (
                     <div className="col-span-full text-center text-gray-500">No published surveys yet.</div>
                   )}
-                  {surveys.filter(s => s.status === 'published' || s.status === 'open').map(s => (
+                  {publishedSurveys.map(s => (
                     <div key={s.survey_id} className="p-4 border rounded-lg bg-white">
                       <h3 className="text-lg font-semibold">{s.title}</h3>
                       <p className="text-sm text-gray-500">Questions: {s.question_count}</p>
@@ -288,7 +269,7 @@ export const UserDash = () => {
                   <p className="text-gray-600 mt-2">Continue working on your unfinished surveys</p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {surveys.filter(s => s.status === 'draft').map(s => (
+                  {draftSurveys.map(s => (
                     <div key={s.survey_id} className="p-4 border rounded-lg bg-white">
                       <h3 className="text-lg font-semibold">{s.title}</h3>
                       <p className="text-sm text-gray-500">Questions: {s.question_count}</p>
@@ -305,7 +286,7 @@ export const UserDash = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="col-span-1">
                     <h3 className="text-lg font-semibold mb-4">Past Surveys</h3>
-                    {surveys.filter(s => s.status === 'closed').length === 0 && (
+                    {closedSurveys.length === 0 && (
                       <div className="text-gray-500">No past surveys yet.</div>
                     )}
 
@@ -325,15 +306,21 @@ export const UserDash = () => {
                             <p className="text-sm text-gray-500">Questions: {s.question_count}</p>
                             <div className="mt-2 flex gap-2">
                               <Button size="sm" onClick={(e) => { e.stopPropagation(); handleViewResults(s); }}>Open Full Results</Button>
-                              <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); handleExportPrompt(s); }}>Export</Button>
+                              <div onClick={(e) => e.stopPropagation()}>
+                                <SurveyExportMenu
+                                  surveyId={s.survey_id}
+                                  surveyTitle={s.title}
+                                  buttonSize="sm"
+                                />
+                              </div>
                             </div>
                           </div>
                         ))}
                     </div>
 
-                    {surveys.filter(s => s.status === 'closed').length > 0 && (
+                    {closedSurveys.length > 0 && (
                       <div className="mt-4">
-                        <Button variant="ghost" onClick={() => handleExportAllPrompt(surveys.filter(s => s.status === 'closed'))} disabled={downloadingAll}>
+                        <Button variant="ghost" onClick={() => handleExportAllPrompt(closedSurveys)} disabled={downloadingAll}>
                           {downloadingAll ? 'Exporting...' : 'Export All'}
                         </Button>
                       </div>
@@ -346,8 +333,11 @@ export const UserDash = () => {
                         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500" />
                       </div>
                     ) : selectedSurvey ? (
-                      <div className="p-4 bg-white border rounded-lg">
-                        <SurveyResults survey={selectedSurvey} />
+                      <div className="space-y-6">
+                        <ResponseTrend dates={selectedSurvey.submission_dates} />
+                        <div className="p-4 bg-white border rounded-lg">
+                          <SurveyResults survey={selectedSurvey} />
+                        </div>
                       </div>
                     ) : (
                       <div className="p-8 bg-white border rounded-lg text-center text-gray-500">
@@ -379,7 +369,9 @@ export const UserDash = () => {
               >
                 ← Back to Surveys
               </Button>
-              <SurveyResults survey={selectedSurvey} />
+              <div className="p-4 bg-white border rounded-lg">
+                <SurveyResults survey={selectedSurvey} />
+              </div>
             </div>
           ) : null}
         </main>
