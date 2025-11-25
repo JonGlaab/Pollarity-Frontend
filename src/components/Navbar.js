@@ -54,7 +54,7 @@ const Navbar = () => {
     };
 
     return (
-        <nav className="w-full h-16 z-50 absolute top-0 left-0 bg-transparent border-none">
+        <nav className="w-full px-8 h-16 z-50 absolute top-0 left-0 bg-transparent border-none">
             <div className="max-w-7xl mx-auto px-4 h-full flex justify-between items-center">
 
 
@@ -82,7 +82,7 @@ const Navbar = () => {
                         <>
                             {/* SUB-CASE A: SURVEY EDITOR MODE */}
                             {isEditor ? (
-                                <DropdownMenu>
+                                <DropdownMenu modal={false}>
                                     <DropdownMenuTrigger asChild>
                                         <Button className="bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)] gap-2">
                                             <PlusCircle size={16} />
