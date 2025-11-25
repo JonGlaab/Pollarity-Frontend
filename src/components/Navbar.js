@@ -54,7 +54,7 @@ const Navbar = () => {
     };
 
     return (
-        <nav className="w-full px-8 h-16 z-50 absolute top-0 left-0 bg-transparent border-none">
+        <nav className="w-full h-16 z-50 absolute top-10 left-0 bg-transparent border-none">
             <div className="max-w-7xl mx-auto px-4 h-full flex justify-between items-center">
 
 
@@ -66,15 +66,20 @@ const Navbar = () => {
                 <div className="flex-1"></div>
 
                 {/* --- RIGHT: CONTEXTUAL TOOLS --- */}
-                <div className="flex items-center gap-4">
+                <div className="flex items-right gap-4">
 
                     {/* CASE 1: ANONYMOUS USER */}
                     {!isAuthenticated && (
+                        [<Link to="/register">
+                            <Button variant="ghost"  className=" bg-[#778DA9] text-[var(--color-primary)] hover:bg-gray-100">
+                                REGISTER
+                            </Button>
+                        </Link>,
                         <Link to="/login">
                             <Button variant="ghost"  className=" bg-[#778DA9] text-[var(--color-primary)] hover:bg-gray-100">
                                 LOG IN
                             </Button>
-                        </Link>
+                        </Link>]
                     )}
 
                     {/* CASE 2: LOGGED IN USER */}
@@ -115,11 +120,11 @@ const Navbar = () => {
                             )}
 
 
-                            <div className="flex items-center gap-2 ml-2 pl-2 border-l border-gray-300">
+                            <div className="flex items-right gap-2 ml-2 pl-2 border-l border-gray-300">
                                 <span className="text-sm font-medium text-gray-700 hidden md:block">
                                     Welcome, {userInfo.name}
                                 </span>
-                                <DropdownMenu>
+                                <DropdownMenu modal={false}>
                                     <DropdownMenuTrigger asChild>
                                         <Avatar className="cursor-pointer hover:opacity-80 transition-opacity w-9 h-9 border border-gray-200">
                                             <AvatarImage src={userInfo.photo} />
