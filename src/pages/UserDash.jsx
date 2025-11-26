@@ -343,7 +343,7 @@ export const UserDash = () => {
 
                                     <div className="col-span-2">
                                       <h3 className="text-lg font-semibold mb-4">Survey Results</h3>
-                                        {isResultsLoading ? (
+                                          {isResultsLoading ? (
                                             <div className="flex items-center justify-center h-full p-8">
                                                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500" />
                                             </div>
