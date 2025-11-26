@@ -47,7 +47,7 @@ export function SurveyResults({ survey }) {
               <span className="bg-[#415a77] text-white px-3 py-1 rounded-lg shrink-0">
                 {index + 1}
               </span>
-              <span className="flex-1 text-[#0d1b2a]">{result.question}</span>
+              <span className="flex-1 text-[#0d1b2a]">{result.title}</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
