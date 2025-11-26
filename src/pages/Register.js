@@ -33,9 +33,19 @@ function Register() {
         try {
             const response = await axios.post("/api/auth/register", data);
 
-            if (response.data.token) {
-                localStorage.setItem("token", response.data.token);
-                axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
+            const { token, user } = response.data;
+
+            if (token) {
+                localStorage.setItem("token", token);
+
+
+                if (user) {
+                    localStorage.setItem("role", user.role || "user");
+                    localStorage.setItem("user_name", user.first_name || "User");
+                    localStorage.setItem("user_photo", user.user_photo_url || "");
+                }
+
+                axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
                 window.dispatchEvent(new Event('authChange'));
                 navigate("/");
             } else {

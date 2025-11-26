@@ -83,7 +83,7 @@ const QuestionEditor = ({
 
 
     return (
-        <div className={`question-editor mb-6 p-4 border-2 rounded-lg shadow-md ${question.isGenerated ? 'border-indigo-200 bg-indigo-50/10' : ''}`}>
+        <div className={`question-editor mb-6 p-4 border-2 rounded-lg shadow-md bg-white ${question.isGenerated ? 'border-indigo-200 bg-indigo-50/10' : ''}`}>
             <div className="flex justify-between items-center mb-3">
                 <div className="flex items-center space-x-2">
                     <h3 className="text-lg font-semibold">Question {index + 1}</h3>
