@@ -32,21 +32,22 @@ const AdminDashboard = () => {
     }, [navigate]);
 
 
-    const handleBan = async (userId) => {
-        if (!window.confirm("Are you sure you want to ban this user? This cannot be undone easily.")) return;
+    const handleToggleBan = async (userId, currentStatus) => {
+        const action = currentStatus ? "unban" : "ban";
+        if (!window.confirm(`Are you sure you want to ${action} this user?`)) return;
 
         try {
             const token = localStorage.getItem("token");
-            await axios.post(`/api/admin/ban/${userId}`, {}, {
+            const res = await axios.post(`/api/admin/ban/${userId}`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
             setUsers(users.map(user =>
-                user.user_id === userId ? { ...user, isBanned: true } : user
+                user.user_id === userId ? { ...user, isBanned: res.data.isBanned } : user
             ));
 
         } catch (err) {
-            alert(err.response?.data?.message || "Failed to ban user.");
+            alert(err.response?.data?.message || `Failed to ${action} user.`);
         }
     };
 
@@ -107,16 +108,17 @@ const AdminDashboard = () => {
                                     )}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    {!user.isBanned && user.role !== 'admin' && (
+                                    {user.role !== 'admin' && (
                                         <button
-                                            onClick={() => handleBan(user.user_id)}
-                                            className="text-red-600 hover:text-red-900 font-bold hover:underline"
+                                            onClick={() => handleToggleBan(user.user_id, user.isBanned)}
+                                            className={`${
+                                                user.isBanned
+                                                    ? 'text-green-600 hover:text-green-900'
+                                                    : 'text-red-600 hover:text-red-900'
+                                            } font-bold hover:underline`}
                                         >
-                                            Ban User
+                                            {user.isBanned ? "Unban User" : "Ban User"}
                                         </button>
-                                    )}
-                                    {user.isBanned && (
-                                        <span className="text-gray-400 italic">No actions</span>
                                     )}
                                 </td>
                             </tr>

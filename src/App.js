@@ -10,6 +10,7 @@ import { CreateSurvey } from './pages/CreateSurvey';
 import ViewSurvey from './pages/ViewSurvey';
 import Profile from './pages/Profile';
 import Navbar from "./components/Navbar";
+import BannedUser from './pages/BannedUser';
 
 import AdminDashboard from './pages/AdminDashboard';
 import { Toaster } from './components/ui/sonner';
@@ -47,6 +48,7 @@ if (typeof window !== 'undefined') {
     axios.defaults.headers.common['Authorization'] = `Bearer ${existingToken}`;
   }
 }
+
 const AdminRoute = ({ children }) => {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
@@ -59,6 +61,11 @@ const AdminRoute = ({ children }) => {
 const UserRoute = ({ children }) => {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
+    const isBanned = localStorage.getItem("isBanned") === "true";
+
+    if (!token) return <Navigate to="/login" />;
+
+    if (isBanned) return <Navigate to="/banned" />;
 
     if (token && role === "admin") {
         return <Navigate to="/admin" />;
@@ -67,7 +74,16 @@ const UserRoute = ({ children }) => {
     return children;
 };
 
+const BannedRoute = ({ children }) => {
+    const token = localStorage.getItem("token");
+    const isBanned = localStorage.getItem("isBanned") === "true";
 
+    if (!token) return <Navigate to="/login" />;
+    // If NOT banned, go back home
+    if (!isBanned) return <Navigate to="/" />;
+
+    return children;
+};
 
 function App() {
 
@@ -88,6 +104,7 @@ function App() {
             <Route path="/survey/:niceUrl" element={<ViewSurvey />} />
             <Route path="/userdash" element={<UserRoute><UserDash /></UserRoute> } />
             <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+            <Route path="/banned" element={<BannedRoute><BannedUser /></BannedRoute>} />
         </Routes>
       </div>
     </Router>

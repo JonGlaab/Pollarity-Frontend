@@ -43,6 +43,7 @@ function Register() {
                     localStorage.setItem("role", user.role || "user");
                     localStorage.setItem("user_name", user.first_name || "User");
                     localStorage.setItem("user_photo", user.user_photo_url || "");
+                    localStorage.setItem("isBanned", user.isBanned);
                 }
 
                 axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
