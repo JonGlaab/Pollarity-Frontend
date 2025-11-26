@@ -34,7 +34,6 @@ export const UserDash = () => {
     const draftSurveys = surveys.filter(s => s.status === 'draft');
     const closedSurveys = surveys.filter(s => s.status === 'closed');
 
-
     // Fetch results and set `selectedSurvey`
     const fetchResultsForSurvey = async (survey) => {
         if (!survey) return;
@@ -57,7 +56,6 @@ export const UserDash = () => {
             });
 
             const payload = res.data;
-
 
             const transformed = {
                 title: payload.survey_title || survey.title,
@@ -399,7 +397,6 @@ export const UserDash = () => {
                         </div>
                     ) : null}
                 </main>
-
             </div>
         </>
     );
