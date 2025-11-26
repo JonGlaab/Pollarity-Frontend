@@ -342,6 +342,7 @@ export const UserDash = () => {
                                     </div>
 
                                     <div className="col-span-2">
+                                      <h3 className="text-lg font-semibold mb-4">Survey Results</h3>
                                         {isResultsLoading ? (
                                             <div className="flex items-center justify-center h-full p-8">
                                                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500" />
@@ -361,11 +362,6 @@ export const UserDash = () => {
                                                         />
                                                     </div>
                                                 ))}
-
-                                                <div className="p-4 bg-white border rounded-lg">
-                                                    {/* SurveyResults will still work because we included 'option' and 'count' in q.data */}
-                                                    <SurveyResults survey={selectedSurvey} />
-                                                </div>
                                             </div>
                                         ) : (
                                             <div className="p-8 bg-white border rounded-lg text-center text-gray-500">

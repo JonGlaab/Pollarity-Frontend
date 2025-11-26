@@ -23,7 +23,6 @@ export const Home = () => {
 
     console.log("Surveys from API:", listOfSurveys);
 
-
     return (
         <>
         <div className="container mx-auto mt-10 p-4">
