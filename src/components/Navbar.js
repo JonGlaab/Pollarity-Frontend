@@ -12,19 +12,25 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
+import axios from 'axios';
 
 const Navbar = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    //const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(
         typeof window !== 'undefined' && !!localStorage.getItem('token')
     );
-    const [userInfo, setUserInfo] = useState({ name: '', photo: '' });
-
+      const [userInfo, setUserInfo] = useState({
+        name: 'User',
+        photo: 'default-photo-url.jpg'  
+    });
+    const [loading, setLoading] = useState(true);  
+    const [error, setError] = useState('');  
 
     const [addQuestionType, setAddQuestionType] = useState('multiple_choice');
 
-    // Helper mapping for display text
+
     const questionTypeLabels = {
         multiple_choice: 'Multiple Choice',
         checkbox: 'Checkbox',
@@ -41,6 +47,39 @@ const Navbar = () => {
             });
         }
     };
+
+    useEffect(() => {
+        const fetchUserInfo = async () => {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                setLoading(false);
+                return navigate('/login'); 
+            }
+
+            try {
+                const response = await axios.get('/api/users/me', {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
+
+                const { first_name, user_photo_url } = response.data;
+
+                setUserInfo({
+                    name: first_name || 'User',  
+                    photo: user_photo_url || 'default-photo-url.jpg'
+                });
+                setIsAuthenticated(true);
+            } catch (err) {
+                console.error('Failed to fetch user data:', err);
+                setError('Failed to load profile data');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchUserInfo();
+    }, [navigate]);
 
     useEffect(() => {
         updateAuthStatus();

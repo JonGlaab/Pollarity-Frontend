@@ -34,7 +34,6 @@ export const UserDash = () => {
     const draftSurveys = surveys.filter(s => s.status === 'draft');
     const closedSurveys = surveys.filter(s => s.status === 'closed');
 
-
     // Fetch results and set `selectedSurvey`
     const fetchResultsForSurvey = async (survey) => {
         if (!survey) return;
@@ -57,7 +56,6 @@ export const UserDash = () => {
             });
 
             const payload = res.data;
-
 
             const transformed = {
                 title: payload.survey_title || survey.title,
@@ -268,7 +266,7 @@ export const UserDash = () => {
                                             <div className="mt-3 flex gap-2">
                                                 <Button onClick={() => navigate(`/survey/${s.nice_url}`)}>Open</Button>
                                                 <Button variant="outline" onClick={() => handleClose(s.nice_url)}>Close</Button>
-                                                <Button variant="ghost" onClick={() => handleViewResults(s)}>Results</Button>
+                                                <Button variant="secondary" onClick={() => handleViewResults(s)}>Results</Button>
                                                 {!s.has_answers && (
                                                     <Button variant="outline" onClick={() => navigate(`/survey/edit/${s.nice_url}`)}>Edit</Button>
                                                 )}
@@ -280,7 +278,7 @@ export const UserDash = () => {
 
                             <TabsContent value="drafts" className="space-y-6">
                                 <div className="text-center max-w-2xl mx-auto">
-                                    <h2 className="text-gray-900">Draft Surveys</h2>
+                                    <h2 className="text-gray-900 ">Draft Surveys</h2>
                                     <p className="text-gray-600 mt-2">Continue working on your unfinished surveys</p>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -342,7 +340,8 @@ export const UserDash = () => {
                                     </div>
 
                                     <div className="col-span-2">
-                                        {isResultsLoading ? (
+                                      <h3 className="text-lg font-semibold mb-4">Survey Results</h3>
+                                          {isResultsLoading ? (
                                             <div className="flex items-center justify-center h-full p-8">
                                                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500" />
                                             </div>
@@ -361,11 +360,6 @@ export const UserDash = () => {
                                                         />
                                                     </div>
                                                 ))}
-
-                                                <div className="p-4 bg-white border rounded-lg">
-                                                    {/* SurveyResults will still work because we included 'option' and 'count' in q.data */}
-                                                    <SurveyResults survey={selectedSurvey} />
-                                                </div>
                                             </div>
                                         ) : (
                                             <div className="p-8 bg-white border rounded-lg text-center text-gray-500">
@@ -403,7 +397,6 @@ export const UserDash = () => {
                         </div>
                     ) : null}
                 </main>
-
             </div>
         </>
     );
