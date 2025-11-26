@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+// Added LayoutDashboard to the import list below
 import { Plus, LogOut, User, ChevronDown, PlusCircle, Check, LayoutDashboard } from 'lucide-react';
 import { Button } from "./ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
@@ -20,7 +21,7 @@ const Navbar = () => {
     );
     const [userInfo, setUserInfo] = useState({ name: '', photo: '' });
 
-    // State to track the currently selected question type
+
     const [addQuestionType, setAddQuestionType] = useState('multiple_choice');
 
     // Helper mapping for display text
@@ -98,7 +99,6 @@ const Navbar = () => {
                             {/* SUB-CASE A: SURVEY EDITOR MODE */}
                             {isEditor ? (
                                 <div className="flex items-center shadow-sm rounded-md">
-                                    {/* Main Button: Adds the currently selected question type */}
                                     <Button
                                         className="bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)] gap-2 rounded-r-none border-r border-white/20"
                                         onClick={() => triggerAddQuestion(addQuestionType)}
@@ -114,7 +114,7 @@ const Navbar = () => {
                                                 <ChevronDown size={14} />
                                             </Button>
                                         </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
+                                        <DropdownMenuContent align="end" className="bg-white">
                                             <DropdownMenuLabel>Select Default Type</DropdownMenuLabel>
                                             <DropdownMenuSeparator />
                                             <DropdownMenuItem onClick={() => setAddQuestionType('multiple_choice')} className="justify-between cursor-pointer">
@@ -141,21 +141,23 @@ const Navbar = () => {
                                 </Link>
                             )}
 
-                            {/* Fixed alignment here: items-right -> items-center */}
-                            <div className="flex items-center gap-2 ml-2 pl-2 border-l border-gray-300">
-                                <span className="text-sm font-medium text-gray-700 hidden md:block">
-                                    Welcome, {userInfo.name}
-                                </span>
+
+                            <div className="flex  items-center gap-2 ml-2 pl-2 border-l ">
                                 <DropdownMenu modal={false}>
                                     <DropdownMenuTrigger asChild>
-                                        <Avatar className="cursor-pointer hover:opacity-80 transition-opacity w-9 h-9 border border-gray-200">
-                                            <AvatarImage src={userInfo.photo} />
-                                            <AvatarFallback className="bg-indigo-100 text-indigo-700">
-                                                {userInfo.name.charAt(0).toUpperCase()}
-                                            </AvatarFallback>
-                                        </Avatar>
+                                        <Button variant="ghost" className="bg-white rounded-full h-auto py-1 pr-1 pl-4 hover:bg-gray-100 flex items-center gap-3 transition-all border border-transparent hover:border-gray-200">
+                                            <span className="text-sm font-medium text-gray-700 hidden md:block">
+                                                Welcome, {userInfo.name}
+                                            </span>
+                                            <Avatar className="w-8 h-8 border border-gray-200">
+                                                <AvatarImage src={userInfo.photo} />
+                                                <AvatarFallback className="bg-indigo-100 text-indigo-700">
+                                                    {userInfo.name && userInfo.name.charAt(0).toUpperCase()}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                        </Button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="w-48">
+                                    <DropdownMenuContent align="end" className="w-48 bg-white">
                                         <DropdownMenuLabel>My Account</DropdownMenuLabel>
                                         <DropdownMenuSeparator />
                                         <DropdownMenuItem onClick={() => navigate('/profile')}>

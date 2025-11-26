@@ -62,7 +62,7 @@ export const SurveyExportMenu = ({ surveyId, surveyTitle, buttonSize = "default"
                     Export Data
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuContent  align="end" className="w-48 bg-white">
                 <DropdownMenuLabel>Choose Format</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => handleDownload('csv')} className="cursor-pointer">
