@@ -105,7 +105,7 @@ const Profile = () => {
 
     return (
         <div className="max-w-2xl mx-auto p-4">
-            <Card>
+            <Card className="p-4 bg-white border rounded-lg">
                 <CardHeader>
                     <CardTitle>Your Profile</CardTitle>
                     <CardDescription>View and edit your personal information.</CardDescription>

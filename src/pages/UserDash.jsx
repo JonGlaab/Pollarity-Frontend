@@ -278,7 +278,7 @@ export const UserDash = () => {
 
                             <TabsContent value="drafts" className="space-y-6">
                                 <div className="text-center max-w-2xl mx-auto">
-                                    <h2 className="text-gray-900">Draft Surveys</h2>
+                                    <h2 className="text-gray-900 ">Draft Surveys</h2>
                                     <p className="text-gray-600 mt-2">Continue working on your unfinished surveys</p>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
