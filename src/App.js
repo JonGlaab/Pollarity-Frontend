@@ -91,15 +91,17 @@ function App() {
         <div className="App pt-10">
             <PageHeader />
             <Routes>
-                <Route path="/" element={<UserRoute><Home /></UserRoute>} />
+                <Route path="/" element={<Home />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/logout" element={<Logout />} />
+                 <Route path="/survey/:niceUrl" element={<ViewSurvey />} />
+
                 <Route path="/profile" element={<UserRoute><Profile /></UserRoute>} />
                 <Route path="/survey/create" element={<UserRoute><CreateSurvey /></UserRoute>} />
                 <Route path="/survey/edit/:niceUrl" element={<UserRoute><CreateSurvey /></UserRoute>} />
-                <Route path="/survey/:niceUrl" element={<ViewSurvey />} />
                 <Route path="/userdash" element={<UserRoute><UserDash /></UserRoute> } />
+
                 <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
                 <Route path="/banned" element={<BannedRoute><BannedUser /></BannedRoute>} />
             </Routes>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-
+// Added LayoutDashboard to the import list below
 import { Plus, LogOut, User, ChevronDown, PlusCircle, Check, LayoutDashboard } from 'lucide-react';
 import { Button } from "./ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
@@ -17,7 +17,6 @@ import axios from 'axios';
 const Navbar = () => {
     const navigate = useNavigate();
     const location = useLocation();
-
     //const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(
         typeof window !== 'undefined' && !!localStorage.getItem('token')
@@ -40,22 +39,31 @@ const Navbar = () => {
 
     const updateAuthStatus = () => {
         const token = localStorage.getItem('token');
-        setIsAuthenticated(!!token);
-        if (token) {
+        if (!token) {
+            setIsAuthenticated(true);
             setUserInfo({
                 name: localStorage.getItem('user_name') || 'User',
                 photo: localStorage.getItem('user_photo') || ''
             });
+        } else {
+            // Clear localStorage values when the user is not authenticated --- or not
+            localStorage.setItem('user_name', '');
+            localStorage.setItem('user_photo', '');
+            setIsAuthenticated(false);
+            setUserInfo({ name: '', photo: '' });
         }
     };
+
 
     useEffect(() => {
         const fetchUserInfo = async () => {
             const token = localStorage.getItem('token');
             if (!token) {
                 setLoading(false);
-                return navigate('/login'); 
-            }
+                setIsAuthenticated(false);
+                return; // <-- allow guests to stay on the page
+}
+
 
             try {
                 const response = await axios.get('/api/users/me', {
@@ -64,14 +72,7 @@ const Navbar = () => {
                     }
                 });
 
-                const { first_name, user_photo_url,isBanned } = response.data;
-                if (isBanned) {
-                    localStorage.setItem("isBanned", "true");
-                    navigate("/banned");
-                    return;
-                } else {
-                    localStorage.setItem("isBanned", "false");
-                }
+                const { first_name, user_photo_url } = response.data;
 
                 setUserInfo({
                     name: first_name || 'User',  
@@ -98,9 +99,6 @@ const Navbar = () => {
             window.removeEventListener('authChange', updateAuthStatus);
         };
     }, []);
-    if (location.pathname === '/admin') {
-        return null;
-    }
 
     const handleLogout = () => {
         navigate('/logout');
