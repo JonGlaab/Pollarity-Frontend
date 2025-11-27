@@ -1,12 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { LogOut } from 'lucide-react';
 
 const AdminDashboard = () => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const navigate = useNavigate();
+
+    const handleLogout = () => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("role");
+        localStorage.removeItem("user_name");
+        localStorage.removeItem("user_photo");
+        delete axios.defaults.headers.common['Authorization'];
+        window.dispatchEvent(new Event('authChange'));
+        navigate("/login");
+    };
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -59,8 +70,17 @@ const AdminDashboard = () => {
             <div className="max-w-6xl mx-auto">
                 <div className="flex justify-between items-center mb-8">
                     <h1 className="text-3xl font-bold text-text-main">Admin Dashboard</h1>
-                    <div className="bg-background-paper px-4 py-2 rounded shadow text-text-muted text-sm">
-                        Total Users: <span className="font-bold text-primary">{users.length}</span>
+
+                    <div className="flex items-center gap-4">
+                        <div className="bg-background-paper px-4 py-2 rounded shadow text-text-muted text-sm">
+                            Total Users: <span className="font-bold text-primary">{users.length}</span>
+                        </div>
+                        <button
+                            onClick={handleLogout}
+                            className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors shadow-sm text-sm font-medium"
+                        >
+                            <LogOut size={16} /> Logout
+                        </button>
                     </div>
                 </div>
 

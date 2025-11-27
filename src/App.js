@@ -79,7 +79,6 @@ const BannedRoute = ({ children }) => {
     const isBanned = localStorage.getItem("isBanned") === "true";
 
     if (!token) return <Navigate to="/login" />;
-    // If NOT banned, go back home
     if (!isBanned) return <Navigate to="/" />;
 
     return children;

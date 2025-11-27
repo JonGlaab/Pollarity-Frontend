@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-// Added LayoutDashboard to the import list below
+
 import { Plus, LogOut, User, ChevronDown, PlusCircle, Check, LayoutDashboard } from 'lucide-react';
 import { Button } from "./ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
@@ -17,6 +17,7 @@ import axios from 'axios';
 const Navbar = () => {
     const navigate = useNavigate();
     const location = useLocation();
+
     //const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(
         typeof window !== 'undefined' && !!localStorage.getItem('token')
@@ -63,7 +64,14 @@ const Navbar = () => {
                     }
                 });
 
-                const { first_name, user_photo_url } = response.data;
+                const { first_name, user_photo_url,isBanned } = response.data;
+                if (isBanned) {
+                    localStorage.setItem("isBanned", "true");
+                    navigate("/banned");
+                    return;
+                } else {
+                    localStorage.setItem("isBanned", "false");
+                }
 
                 setUserInfo({
                     name: first_name || 'User',  
@@ -90,6 +98,9 @@ const Navbar = () => {
             window.removeEventListener('authChange', updateAuthStatus);
         };
     }, []);
+    if (location.pathname === '/admin') {
+        return null;
+    }
 
     const handleLogout = () => {
         navigate('/logout');

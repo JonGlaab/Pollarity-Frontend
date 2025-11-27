@@ -71,12 +71,15 @@ function Login() {
                     const firstName = user.first_name || user.firstName || user.given_name || user.name || "User";
                     localStorage.setItem("user_name", firstName);
                     localStorage.setItem("user_photo", user.user_photo_url || "");
+                    localStorage.setItem("isBanned", user.isBanned ? "true" : "false");
                 }
 
                 axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
                 window.dispatchEvent(new Event('authChange'));
 
-                if (user?.role === 'admin') {
+                if (user?.isBanned) {
+                    navigate("/banned");
+                } else if (user?.role === 'admin') {
                     navigate("/admin");
                 } else {
                     navigate("/");
