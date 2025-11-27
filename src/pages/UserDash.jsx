@@ -248,10 +248,10 @@ export const UserDash = () => {
                 <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     {activeView === "browse" ? (
                         <Tabs defaultValue="open" className="space-y-6">
-                            <TabsList className="grid w-full max-w-4xl mx-auto grid-cols-3">
-                                <TabsTrigger value="open">Published Surveys</TabsTrigger>
-                                <TabsTrigger value="drafts">Drafts</TabsTrigger>
-                                <TabsTrigger value="closed">Past Surveys</TabsTrigger>
+                            <TabsList className="grid w-full max-w-4xl mx-auto grid-cols-3 bg-[#e0e1dd] p-1 rounded-lg">
+                                <TabsTrigger value="open" className="data-[state=active]:bg-[#415a77] data-[state=active]:text-[#e0e1dd] rounded-md">Published Surveys</TabsTrigger>
+                                <TabsTrigger value="drafts" className="data-[state=active]:bg-[#415a77] data-[state=active]:text-[#e0e1dd] rounded-md">Drafts</TabsTrigger>
+                                <TabsTrigger value="closed" className="data-[state=active]:bg-[#415a77] data-[state=active]:text-[#e0e1dd] rounded-md">Past Surveys</TabsTrigger>
                             </TabsList>
 
                             <TabsContent value="open" className="space-y-6">
