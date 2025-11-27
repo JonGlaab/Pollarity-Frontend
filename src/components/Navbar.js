@@ -21,10 +21,7 @@ const Navbar = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(
         typeof window !== 'undefined' && !!localStorage.getItem('token')
     );
-      const [userInfo, setUserInfo] = useState({
-        name: 'User',
-        photo: 'default-photo-url.jpg'  
-    });
+    const [userInfo, setUserInfo] = useState({ name: '', photo: '' });
     const [loading, setLoading] = useState(true);  
     const [error, setError] = useState('');  
 
@@ -37,58 +34,68 @@ const Navbar = () => {
         short_answer: 'Short Answer'
     };
 
-    const updateAuthStatus = () => {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            setIsAuthenticated(true);
-            setUserInfo({
-                name: localStorage.getItem('user_name') || 'User',
-                photo: localStorage.getItem('user_photo') || ''
-            });
-        } else {
-            // Clear localStorage values when the user is not authenticated --- or not
-            localStorage.setItem('user_name', '');
-            localStorage.setItem('user_photo', '');
-            setIsAuthenticated(false);
-            setUserInfo({ name: '', photo: '' });
-        }
-    };
+  const updateAuthStatus = () => {
+    const token = localStorage.getItem('token');
+
+    if (!token) {
+        setIsAuthenticated(false);
+        setUserInfo({ name: '', photo: '' });
+        return;
+    }
+
+    setIsAuthenticated(true);
+    setUserInfo({
+        name: localStorage.getItem('user_name') || 'User',
+        photo: localStorage.getItem('user_photo') || ''
+    });
+};
+
 
 
     useEffect(() => {
-        const fetchUserInfo = async () => {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                setLoading(false);
-                setIsAuthenticated(false);
-                return; // <-- allow guests to stay on the page
-}
+    const fetchUserInfo = async () => {
+        const token = localStorage.getItem('token');
 
+        if (!token) {
+            setIsAuthenticated(false);
+            setUserInfo({ name: '', photo: '' });
+            setLoading(false);
+            return;
+        }
 
-            try {
-                const response = await axios.get('/api/users/me', {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                });
+        try {
+            const response = await axios.get('/api/users/me');
+            const { first_name, user_photo_url, isBanned } = response.data;
 
-                const { first_name, user_photo_url } = response.data;
-
-                setUserInfo({
-                    name: first_name || 'User',  
-                    photo: user_photo_url || 'default-photo-url.jpg'
-                });
-                setIsAuthenticated(true);
-            } catch (err) {
-                console.error('Failed to fetch user data:', err);
-                setError('Failed to load profile data');
-            } finally {
-                setLoading(false);
+            if (isBanned) {
+                localStorage.setItem("isBanned", "true");
+                navigate("/banned");
+                return;
             }
-        };
 
-        fetchUserInfo();
-    }, [navigate]);
+            setIsAuthenticated(true);
+            setUserInfo({
+                name: first_name || 'User',
+                photo: user_photo_url || 'default-photo-url.jpg'
+            });
+
+        } catch (err) {
+            console.error("Failed to fetch user:", err);
+
+            localStorage.removeItem("token");
+            localStorage.setItem("isBanned", "false");
+
+            setIsAuthenticated(false);
+            setUserInfo({ name: '', photo: '' });
+
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    fetchUserInfo();
+}, [navigate]);
+
 
     useEffect(() => {
         updateAuthStatus();
@@ -100,9 +107,18 @@ const Navbar = () => {
         };
     }, []);
 
-    const handleLogout = () => {
-        navigate('/logout');
-    };
+   const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    localStorage.removeItem("user_name");
+    localStorage.removeItem("user_photo");
+    localStorage.setItem("isBanned", "false");
+
+    window.dispatchEvent(new Event("authChange"));
+
+    navigate("/login");
+};
+
 
     const isEditor = location.pathname.includes('/survey/create') || location.pathname.includes('/survey/edit');
 
@@ -111,6 +127,9 @@ const Navbar = () => {
         window.dispatchEvent(event);
     };
 
+    if (loading) {
+    return <nav className="w-full h-16 bg-transparent"></nav>;
+}
     return (
         <nav className="w-full px-4 h-16 z-50 sticky top-5 left-2 right-2 bg-transparent border-none bg-background/80 backdrop-blur-md">
             <div className=" px-4 h-full flex justify-between items-center">
